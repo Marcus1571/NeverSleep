@@ -11,7 +11,7 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 ## In flight
 
-**v0.1.1 released** (first tagged release) — v0.1 **compiles and is installed** on the operator's Mac (2026-11-09): `swift build -c release` clean, `Scripts/make-bundle.sh` produces an ad-hoc-signed arm64 `.app`, copied to `/Applications` and launched (log shows baseline captured, AC power detected). Compile fixes + three runtime bug fixes in `findings.md` entry 8. **Not yet smoke-tested**: the lid-closed toggle + restore-on-quit round trip (needs the operator at the laptop, admin prompt). Known gap: the per-source preference toggles only drive the icon state on power-source change; they do not apply pmset by themselves yet.
+**v0.1.1 released** (first tagged release) — v0.1 **compiles and is installed** on the operator's Mac (2026-11-09): `swift build -c release` clean, `Scripts/make-bundle.sh` produces an ad-hoc-signed arm64 `.app`, copied to `/Applications` and launched (log shows baseline captured, AC power detected). Compile fixes + three runtime bug fixes in `findings.md` entry 8. **Partly smoke-tested 2026-11-09 (log-verified):** toggle on → one admin prompt → `SleepDisabled=1` verified (`-b` scope accepted on Apple Silicon, macOS 27); quit → baseline restored to 0 with a single prompt. **Still to test:** actually closing the lid while suppressed. Known gap: the per-source preference toggles only drive the icon state on power-source change; they do not apply pmset by themselves yet.
 
 ## Not started (ordered)
 
