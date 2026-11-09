@@ -40,7 +40,15 @@ Explicitly out of contract (was never NoSleep behavior): forcing the display off
 
 ## Build & test
 
-- Toolchain: Xcode on the operator's Mac; Swift + SwiftUI; `MenuBarExtra` for the menu-bar surface.
+- Toolchain: SwiftPM with the Command Line Tools only (no Xcode project). `swift build -c release`, then `Scripts/make-bundle.sh` assembles `build/NeverSleep.app` (Info.plist, icns, ad-hoc signature). Menu bar via `NSStatusItem` (not `MenuBarExtra`), SwiftUI only for the Preferences window. Three SwiftPM targets: `NeverSleepCore` (library — anything the app or CLI calls must be `public`), `NeverSleep` (app, entry in `main.swift`), `neversleepctl` (CLI).
+- If `swift build` fails on *any* package with `Undefined symbols … PackageDescription.Package.__allocating_init`, the Command Line Tools have stale `*.private.swiftinterface` files in `ManifestAPI/PackageDescription.swiftmodule`; move them out or reinstall CLT (`findings.md` §8).
+- Runtime log: `~/Library/Logs/NeverSleep.log` (plus os_log subsystem `app.legba.neversleep`).
+
+### pmset output the parsers rely on (verified macOS 27, 2026-11-09)
+
+- `pmset -g`: `SleepDisabled` line appears only when non-zero; absent = 0.
+- `pmset -g batt`: first line `Now drawing from 'AC Power'` or `'Battery Power'` (quoted, no colon).
+- `pmset` writes need root: each write goes through one `osascript … with administrator privileges` dialog; reads are unprivileged. Every write is verified by reading `pmset -g` back.
 - No CI. Verification expectations: behavior claims come from a real Mac run (admin auth included); from elsewhere, only compile checks count.
 - icon responsibilities: `art/neversleep-app-icon.svg` → `.icns` via `iconutil` on the Mac (SVG → PNG intermediate at 16/32/64/128/256/512/1024 px), `art/menubar-z*.svg` → in-app template-recolorable PDFs. Conversion happens Mac-side, not in this repo's CI (there is none).
 
