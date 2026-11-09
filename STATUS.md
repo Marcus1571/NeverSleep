@@ -11,7 +11,7 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 ## In flight
 
-v0.1 codebase written (see "In flight (2026-11-09, this session)" below). — no, corrected: [2026-11-09] code exists, uncompiled.
+v0.1 codebase written 2026-11-09: full SPM sources for the app, core and CLI (see the session block below). Not compiled yet — no macOS toolchain on LT.
 
 ## Not started (ordered)
 
