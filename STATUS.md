@@ -26,7 +26,7 @@ Nothing — no code written yet.
 
 ## Open questions / blocked
 
-- The operator mentioned prior settings work on "macai" (their Mac) that may have flipped these pmset knobs permanently. That host is not SSH-reachable at session start (2026-11-09); once accessible, check `pmset -g` on it for already-set `disablesleep`/related keys before the first prototype install, to avoid shipping an app that double-manages an existing OS setting.
+- RESOLVED this session: the operator's other Mac ("macai", benold_ai) already runs deliberately with `SleepDisabled 1` set *permanently* (configured via a Claude Code session to stay awake with the lid closed forever — that box's intended mode). Reference config, not something NeverSleep manages. Consequence for v1: at startup, read `pmset -g`; if `SleepDisabled 1` is already present, warn "already permanently awake" and enable nothing, instead of double-managing an existing OS setting.
 - Spotlight/behavior differences on Apple Silicon with `disablesleep` (classic PM path) — needs one laptop test before claiming parity; treat as unverified until then.
 
 ## Decisions this session

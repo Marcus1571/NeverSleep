@@ -51,3 +51,9 @@ Verdict: `disablesleep` via a privileged helper is the adopted mechanism for Nev
 ## 6. Art provenance (2026-11-09)
 
 - The "Zz" glyphs were taken from the original repo's `Icons/` (`ZzFilled.svg`, color `#000000`) and recolored (`#4EC9E8` on `#10141F` rounded square for the app icon; same recolor, 35% opacity for the inactive menu-bar state). Same glyph geometry, different colors — per the operator's explicit request ("copy the icon … but change the colors so it's not such a blatant copy"). GPL-2.0 is inherited for these files; see `art/ART-LICENSE.md`.
+
+## 7. macai audit — the "permanent" precedent confirmed (2026-11-09)
+
+- The operator confirmed the context: **macai was deliberately configured (by a Claude Code session) to run perfectly with the lid closed and stay that way** — it's that box's intended modus operandi, applied as permanent settings, not an accident to be "fixed". SSH access was set up this session (key-based, alias `macai`) and `pmset` was read directly.
+- Found, exactly matching that intent: system-wide **`SleepDisabled 1`** (the permanent `pmset disablesleep 1` state), **AC: `sleep 0`, `displaysleep 0`** (fully awake, display always on, lid never matters), **battery: `sleep 1`, `displaysleep 2`**. `pmset -g` live showed "sleep prevented by screensharingd" — the machine spends its life screen-shared.
+- Verdict: the mechanism is proven in daily use on that box, and its state (a *permanent* system-wide knob) is precisely what NeverSleep replaces with a *runtime* toggle: same effect on demand, automatically reverted on quit — so the laptop's normal sleep behavior is intact 99% of the time, unlike macai's always-on configuration. NeverSleep must not touch machines already in `SleepDisabled 1`; detect and warn instead of double-managing.
