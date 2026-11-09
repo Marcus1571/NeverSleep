@@ -11,7 +11,7 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 ## In flight
 
-Nothing — no code written yet.
+v0.1 codebase written (see "In flight (2026-11-09, this session)" below). — no, corrected: [2026-11-09] code exists, uncompiled.
 
 ## Not started (ordered)
 
@@ -34,3 +34,11 @@ Nothing — no code written yet.
 - App name: NeverSleep (operator's choice) — see `findings.md` for a naming-collision note (an entirely separate "NEVER SLEEP" watch app exists on the store; unconflicting).
 - License: MIT for code, GPL-2.0 inherited only for the derived art (see `AGENTS.md`).
 - Target mechanism: pmset-based, not a revival of the kext path (see `findings.md` verdict entries 1 and 4).
+
+
+## In flight (2026-11-09, this session)
+
+- **Full v0.1 codebase written**: SPM executable targets `NeverSleep` (app) + `neversleepctl` (CLI) + `NeverSleepCore` (log, shell runner, pmset parsing, `SleepController` with baseline capture/restore + write verification, power-source read via `pmset -g batt`, `AdminPrivileges` (osascript auth dialog v1), LockScreen via `SACLockScreenImmediate`, `SettingsStore` (separate AC/battery toggles, lock-on-lid-close, B/W icons, LaunchAgent login item). Status-bar UI via `NSStatusItem` + SF-Symbol "zzz" (template/colored per setting) — identical behavior on macOS 11 → 26+, Intel + Apple Silicon: **no version or arch branches by design**; the runtime *probes* (reads pmset state, tries `-b` scope first with `-a` fallback, verifies every write, refuses to touch a machine already in `SleepDisabled 1`).
+- **Scripts**: `Scripts/make-bundle.sh` (Mac-side: swift build + assemble .app + Info.plist from art/ icon + ad-hoc codesign) and `Scripts/make-iconset.sh` (SVG→PNG→icns via qlmanage/rsvg-convert).
+- **Not compiled yet** — no macOS toolchain on LT. First action on the Mac: `swift build -c release` in the checkout, fix whatever the compiler flags, then `Scripts/make-bundle.sh`.
+- **Deliberately deferred** (features present in NoSleep, still absent here): double-click activation (stub), lid-close *detection* for lock-screen timing (v1 locks immediately on enabling suppression when the option is on; IOKit `AppleSmartBattery` "AppleClamshellState" read planned for v0.2), Sparkle auto-updates, IOKit-based power-source notifications (currently a 5 s poll).
