@@ -73,14 +73,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if case .failed(let reason) = outcome {
             NSAlert(messageText: "NeverSleep", informativeText: reason).runModal()
         }
-        if on, settings.lockScreenOnLidClose {
-            // Lid-close lock is enforced whenever suppression is on (v1 simplification).
-            LockScreen.lock()
-        } else if on {
-            // Defer lock until the lid actually closes; v1 skips proactive locking
-            // to avoid locking a display the user is actively reading.
-            Log.info("lock-on-lid-close requested; proactive lock deferred to lid event (pending IOKit read)")
-        }
         statusBar.refresh(active: on)
     }
 

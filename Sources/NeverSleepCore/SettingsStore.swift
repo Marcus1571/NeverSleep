@@ -12,9 +12,6 @@ final class SettingsStore: ObservableObject {
     @Published var suppressOnBattery: Bool {
         didSet { defaults.set(suppressOnBattery, forKey: Keys.suppressOnBattery) }
     }
-    @Published var lockScreenOnLidClose: Bool {
-        didSet { defaults.set(lockScreenOnLidClose, forKey: Keys.lockScreenOnLidClose) }
-    }
     @Published var useBlackWhiteIcons: Bool {
         didSet { defaults.set(useBlackWhiteIcons, forKey: Keys.useBlackWhiteIcons) }
     }
@@ -26,7 +23,6 @@ final class SettingsStore: ObservableObject {
     private enum Keys {
         static let suppressOnAC = "suppressOnAC"
         static let suppressOnBattery = "suppressOnBattery"
-        static let lockScreenOnLidClose = "lockScreenOnLidClose"
         static let useBlackWhiteIcons = "useBlackWhiteIcons"
         static let launchAtLogin = "launchAtLogin"
     }
@@ -34,7 +30,6 @@ final class SettingsStore: ObservableObject {
     init(defaults: UserDefaults = .standard) {
         suppressOnAC = defaults.object(forKey: Keys.suppressOnAC) as? Bool ?? false
         suppressOnBattery = defaults.object(forKey: Keys.suppressOnBattery) as? Bool ?? false
-        lockScreenOnLidClose = defaults.object(forKey: Keys.lockScreenOnLidClose) as? Bool ?? false
         useBlackWhiteIcons = defaults.object(forKey: Keys.useBlackWhiteIcons) as? Bool ?? true
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
     }

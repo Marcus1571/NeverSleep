@@ -10,7 +10,6 @@ struct PreferencesView: View {
             Toggle("Never sleep on AC Adapter", isOn: $settings.suppressOnAC)
             Toggle("Never sleep on Battery", isOn: $settings.suppressOnBattery)
             Divider()
-            Toggle("Require password on display opening", isOn: $settings.lockScreenOnLidClose)
             Toggle("Use black and white menu bar icons", isOn: $settings.useBlackWhiteIcons)
             Divider()
             Text("A Mac awake with a closed lid has reduced cooling — use it while you are using the machine, not in a backpack.").font(.footnote).foregroundColor(.secondary)

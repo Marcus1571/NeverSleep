@@ -13,7 +13,7 @@ Reproduced from NoSleep v1.5.x source and changelog (research trail in `findings
 | 3 | Menu-bar "Zz" toggle | Filled Zz = awake-when-closed active; outline/faded = inactive; one click toggles the mode that matches the *current* power source |
 | 4 | Use black and white menu bar icons | Preference: monochrome vs. accent-colored icons |
 | 5 | Use double click to activate | Double-click on the icon toggles like the single-click path |
-| 6 | Require password on display opening | While sleep suppression is active and the lid is closed, trigger the lock screen (NoSleep used `SACLockScreenImmediate`) |
+| 6 | Require password on display opening | **Dropped** (decision, 2026-11-09): no auto-lock at all — closing the lid turns the display off natively and the session stays unlocked; users lock by hand (`Control-Command-Q`) when they want to |
 | 7 | Start NoSleep utility on system startup | Login item (modern SMAppService instead of the old helper) |
 | 8 | Automatically check for updates | Sparkle or osx-updater equivalent — decide at implementation |
 | 9 | Command-line interface | `neversleepctl` (state on/off/status), so scripts can flip it like `NoSleepCtrl` could |
@@ -35,7 +35,7 @@ Explicitly out of contract (was never NoSleep behavior): forcing the display off
   - Sleep suppression applies on the current power source only when the matching NoSleep-style toggle is on — behavior at the moment the lid closes, not a permanent system setting.
   - Quit restores normal behavior (pmset value verified equal to pre-app baseline; baseline is stored when the app starts).
 - **Display behavior:** no touching displays. On lid close macOS turns the display off on its own; NeverSleep only stops the *sleep*, hence the "exactly like an open lid, minus the screen" effect the operator asked for.
-- **Auto-lock:** while suppression is active and the lid is closed, lock the session (what the "Require password on display opening" option did).
+- **Never locks anything:** the operator explicitly rejected the NoSleep auto-lock option — a closed lid must only mean "display off" (native), with the session unlocked. Locking stays a manual action (`Control-Command-Q`).
 - **Heat warning** (user-visible): closed lid = reduced cooling; surface this once in the README, never nag in-app.
 
 ## Build & test

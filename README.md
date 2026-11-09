@@ -10,9 +10,55 @@ NoSleep solved this with a kernel extension, which modern macOS (SIP + user-appr
 
 - One menu-bar toggle (`Zz` icon, filled = awake): closes-the-lid sleep prevention, per power source
 - Separate behavior on battery vs. AC, like NoSleep's two independent toggles
-- Optional "require password on display opening" auto-lock when the lid closes
 - State restored to normal macOS sleep behavior the moment the app quits
 
 Read [STATUS.md](STATUS.md) for where development stands, and [findings.md](findings.md) for the research trail that led to the approach. The art works: it is a recolored derivative ([art/ART-LICENSE.md](art/ART-LICENSE.md)) — same "Zz" glyph as NoSleep, different color scheme so it is not a wholesale visual copy.
 
 ⚠️ A Mac awake with a closed lid has reduced cooling. NeverSleep is for use *while you are using the machine*, not for closed-lid tasks in a backpack all day.
+
+## Compiling agent instructions (precise)
+
+Run these on a Mac with Swift installed. Nothing else: no Xcode IDE session, no tool additions.
+
+```bash
+# 1. Prereq (once): command-line Swift. macOS 11+ host is enough.
+xcode-select --install          # skip if swift already responds to: swift --version
+
+# 2. Get the sources
+git clone https://github.com/Marcus1571/NeverSleep.git ~/src/NeverSleep
+cd ~/src/NeverSleep
+
+# 3. Fix first, ask never: run the build; every compiler flag/error is the to-do list.
+#    Never weaken a runtime check to satisfy the compiler — raise it to the maintainer instead.
+swift build -c release
+
+# 4. Package (builds the .app, rasterizes art/neversleep-app-icon.svg to .icns, ad-hoc signs)
+./Scripts/make-bundle.sh
+
+# 5. Install + smoke test
+cp -R build/NeverSleep.app /Applications/
+open /Applications/NeverSleep.app
+# smoke test: toggle "Keep awake with lid closed", close the lid, reopen it — the session must still be live
+#             (audio/video calls keep running with the screen off). Then quit the app and verify sleep behaves
+#             exactly as before quitting.
+```
+
+Universal binary (Intel + Apple Silicon in one app). SwiftPM ≥ 5.6 handles both arches in one go; on an older toolchain, build each arch and `lipo`-join instead:
+
+```bash
+# one-shot (preferred):
+swift build -c release --arch arm64 --arch x86_64
+
+# fallback (older toolchain):
+swift build -c release --arch arm64  && cp -r .build/arm64-apple-macosx/release build/opt/arm64
+swift build -c release --arch x86_64 && cp -r .build/x86_64-apple-macosx/release build/opt/x86_64
+lipo -create build/opt/arm64/NeverSleep build/opt/x86_64/NeverSleep -output build/NeverSleep-universal
+```
+
+*p.s. the built-in macOS shortcut to lock the screen by hand is `Control-Command-Q`.*
+
+### What the build must NOT do
+
+- No Developer ID/notarized distribution steps — the repo ships source; sign only ad-hoc (`codesign -s -`, already in the bundle script).
+- No ci.yml, no Playwright, no worktrees: plain `swift build` on `main`.
+
