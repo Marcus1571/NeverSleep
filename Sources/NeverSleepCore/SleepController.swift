@@ -9,15 +9,15 @@ import Foundation
 ///
 /// Privilege note: pmset writes need root. In v1 every write goes through one
 /// system auth dialog (osascript "with administrator privileges"); reads don't.
-final class SleepController {
-    enum Outcome: Equatable {
+public final class SleepController {
+    public enum Outcome: Equatable {
         case enabled(scope: String)
         case disabled(scope: String)
         case alreadyEnabled(scope: String)
         case alreadyDisabled
         case failed(reason: String)
 
-        var userMessage: String {
+        public var userMessage: String {
             switch self {
             case .enabled(let scope): return "Sleep suppressed (\(scope)). Mac stays awake with the lid closed."
             case .disabled(let scope): return "Normal macOS sleep restored (\(scope))."
@@ -28,21 +28,21 @@ final class SleepController {
         }
     }
 
-    struct Baseline: Equatable { let sleepDisabled: Int? }
+    public struct Baseline: Equatable { public let sleepDisabled: Int? }
 
     private let pmsetPath = "/usr/bin/pmset"
     private let admin: AdminPrivileges
     private(set) var prefersBatteryScopedKey = true
-    private(set) var baseline: Baseline?
+    public private(set) var baseline: Baseline?
 
-    init(admin: AdminPrivileges = .shared) {
+    public init(admin: AdminPrivileges = .shared) {
         self.admin = admin
     }
 
     // MARK: Reading (unprivileged)
 
     @discardableResult
-    func readState() -> PowerState? {
+    public func readState() -> PowerState? {
         let (code, out, err) = ShellRunner.run(pmsetPath, arguments: ["-g"])
         guard code == 0 else {
             Log.error("pmset -g failed exit=\(code) stderr=\(err.trimmingCharacters(in: .whitespacesAndNewlines))")
@@ -55,24 +55,30 @@ final class SleepController {
 
     // MARK: Baseline
 
-    func captureBaseline() {
+    public func captureBaseline() {
         let state = readState()
         baseline = state.map { Baseline(sleepDisabled: $0.sleepDisabled) }
         Log.info("baseline captured: \(String(describing: baseline))")
     }
 
-    func restoreBaseline() {
+    public func restoreBaseline() {
         guard let baseline = baseline else {
             Log.info("restoreBaseline: no baseline captured, nothing to do")
             return
         }
-        Log.info("restoring baseline SleepDisabled=\(baseline.sleepDisabled ?? 0)")
-        _ = writeDisablesleep(baseline.sleepDisabled ?? 0)
+        let target = baseline.sleepDisabled ?? 0
+        // No write (and no admin prompt) when nothing changed — quit runs this twice.
+        if readState()?.sleepDisabled == target {
+            Log.info("restoreBaseline: already at baseline SleepDisabled=\(target)")
+            return
+        }
+        Log.info("restoring baseline SleepDisabled=\(target)")
+        _ = writeDisablesleep(target)
     }
 
     // MARK: Motate
 
-    func setSleepSuppressed(_ suppress: Bool) -> Outcome {
+    public func setSleepSuppressed(_ suppress: Bool) -> Outcome {
         let target = suppress ? 1 : 0
         if let current = readState()?.sleepDisabled, current == target {
             let scope = prefersBatteryScopedKey ? "battery-scoped (-b)" : "system-wide (-a)"
@@ -108,8 +114,8 @@ final class SleepController {
 
 /// v1 privilege path: one auth dialog per write via osascript. Password never
 /// passes through this app — the system dialog handles it.
-final class AdminPrivileges {
-    static let shared = AdminPrivileges()
+public final class AdminPrivileges {
+    public static let shared = AdminPrivileges()
     init(commandPath: String = "/usr/bin/osascript") { self.commandPath = commandPath }
     private let commandPath: String
 

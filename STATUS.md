@@ -11,7 +11,7 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 ## In flight
 
-v0.1 codebase written 2026-11-09: full SPM sources for the app, core and CLI (see the session block below). Not compiled yet — no macOS toolchain on LT.
+v0.1 **compiles and is installed** on the operator's Mac (2026-11-09): `swift build -c release` clean, `Scripts/make-bundle.sh` produces an ad-hoc-signed arm64 `.app`, copied to `/Applications` and launched (log shows baseline captured, AC power detected). Compile fixes + three runtime bug fixes in `findings.md` entry 8. **Not yet smoke-tested**: the lid-closed toggle + restore-on-quit round trip (needs the operator at the laptop, admin prompt). Known gap: the per-source preference toggles only drive the icon state on power-source change; they do not apply pmset by themselves yet.
 
 ## Not started (ordered)
 
@@ -40,5 +40,5 @@ v0.1 codebase written 2026-11-09: full SPM sources for the app, core and CLI (se
 
 - **Full v0.1 codebase written**: SPM executable targets `NeverSleep` (app) + `neversleepctl` (CLI) + `NeverSleepCore` (log, shell runner, pmset parsing, `SleepController` with baseline capture/restore + write verification, power-source read via `pmset -g batt`, `AdminPrivileges` (osascript auth dialog v1),→ replaced by explicit drop, `SettingsStore` (separate AC/battery toggles, B/W icons, LaunchAgent login item). Status-bar UI via `NSStatusItem` + SF-Symbol "zzz" (template/colored per setting) — identical behavior on macOS 11 → 26+, Intel + Apple Silicon: **no version or arch branches by design**; the runtime *probes* (reads pmset state, tries `-b` scope first with `-a` fallback, verifies every write, refuses to touch a machine already in `SleepDisabled 1`).
 - **Scripts**: `Scripts/make-bundle.sh` (Mac-side: swift build + assemble .app + Info.plist from art/ icon + ad-hoc codesign) and `Scripts/make-iconset.sh` (SVG→PNG→icns via qlmanage/rsvg-convert).
-- **Not compiled yet** — no macOS toolchain on LT. First action on the Mac: `swift build -c release` in the checkout, fix whatever the compiler flags, then `Scripts/make-bundle.sh`.
+- **Compiled 2026-11-09** on the Mac — see "In flight" above.
 - **Deliberately deferred** (features present in NoSleep, still absent here): double-click activation (stub), lid-close *detection* for lock-screen timing (v1 locks immediately on enabling suppression when the option is on; IOKit `AppleSmartBattery` "AppleClamshellState" read planned for v0.2), Sparkle auto-updates, IOKit-based power-source notifications (currently a 5 s poll).

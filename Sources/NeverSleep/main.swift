@@ -7,4 +7,4 @@ let appDel = AppDelegate()
 let app = NSApplication.shared
 app.delegate = appDel
 app.setActivationPolicy(.accessory)   // menu-bar only, never an icon in the Dock
-_ = NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
+app.run()

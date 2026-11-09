@@ -2,19 +2,18 @@ import Foundation
 
 /// Which power source is active, read from `pmset -g batt` (works across all
 /// targeted macOS versions, no IOKit header wrangling, identical on Intel/ARM).
-enum PowerSource: String {
+public enum PowerSource: String {
     case battery = "Battery Power"
     case ac = "AC Power"
     case unknown = "Unknown"
 }
 
-enum PowerSourceReader {
-    static func current() -> PowerSource {
+public enum PowerSourceReader {
+    public static func current() -> PowerSource {
         let (code, out, _) = ShellRunner.run("/usr/bin/pmset", arguments: ["-g", "batt"])
         guard code == 0 else { return .unknown }
-        for prefix in [PowerSource.ac.rawValue, PowerSource.battery.rawValue] where out.contains(prefix + ":") {
-            return prefix == PowerSource.ac.rawValue ? .ac : .battery
-        }
+        if out.contains("'\(PowerSource.ac.rawValue)'") { return .ac }
+        if out.contains("'\(PowerSource.battery.rawValue)'") { return .battery }
         return .unknown
     }
 }

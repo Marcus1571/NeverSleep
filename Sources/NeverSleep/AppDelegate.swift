@@ -71,7 +71,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let outcome = controller.setSleepSuppressed(on)
         Log.info("toggle result: \(outcome.userMessage)")
         if case .failed(let reason) = outcome {
-            NSAlert(messageText: "NeverSleep", informativeText: reason).runModal()
+            let alert = NSAlert()
+            alert.messageText = "NeverSleep"
+            alert.informativeText = reason
+            alert.runModal()
         }
         statusBar.refresh(active: on)
     }

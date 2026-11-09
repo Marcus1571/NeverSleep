@@ -3,14 +3,14 @@ import os
 
 /// Rich logging: every attempt, input that matters, timing, and the specific
 /// outcome/error — written to os_log AND ~/Library/Logs/NeverSleep.log.
-enum Log {
+public enum Log {
     private static let osLog = Logger(subsystem: "app.legba.neversleep", category: "runtime")
     private static let fileURL: URL? = FileManager.default
         .urls(for: .libraryDirectory, in: .userDomainMask).first?
         .appendingPathComponent("Logs/NeverSleep.log")
 
-    static func info(_ msg: String) { write(msg, level: "INFO") }
-    static func error(_ msg: String) { write(msg, level: "ERROR") }
+    public static func info(_ msg: String) { write(msg, level: "INFO") }
+    public static func error(_ msg: String) { write(msg, level: "ERROR") }
 
     private static func write(_ msg: String, level: String) {
         let line = "[\(DateFormatter.logStamp())] [\(level)] \(msg)"
@@ -23,7 +23,7 @@ enum Log {
         }
         if let handle = try? FileHandle(forWritingTo: url) {
             _ = try? handle.seekToEnd()
-            _ = try? handle.write(data: Data((line + "\n").utf8))
+            _ = try? handle.write(contentsOf: Data((line + "\n").utf8))
             try? handle.close()
         }
     }

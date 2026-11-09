@@ -1,12 +1,14 @@
 import Foundation
 
 /// Represents parsed `pmset -g` output. Keys are exactly the strings pmset emits.
-struct PowerState: Equatable {
+public struct PowerState: Equatable {
     let values: [String: String]
 
-    /// "SleepDisabled" from the system-wide section. nil = key unknown on this build.
-    var sleepDisabled: Int? {
-        values["SleepDisabled"].flatMap(Int.init)
+    /// "SleepDisabled" from the system-wide section. pmset omits the key when it
+    /// is 0 (observed macOS 27), so absent = 0; nil only for an unparseable value.
+    public var sleepDisabled: Int? {
+        guard let raw = values["SleepDisabled"] else { return 0 }
+        return Int(raw)
     }
     var displaysSleep1minute: Int? { values["sleep"].flatMap(Int.init) }
 

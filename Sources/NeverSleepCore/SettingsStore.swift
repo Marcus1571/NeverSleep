@@ -3,19 +3,19 @@ import Foundation
 /// User-facing settings, mirroring the NoSleep pane (parity contract in KB.md).
 /// Persistence: UserDefaults is durable across app restarts; sleep-state
 /// restoration is behavioral (baseline at quit), not a persisted flag.
-final class SettingsStore: ObservableObject {
-    static let shared = SettingsStore()
+public final class SettingsStore: ObservableObject {
+    public static let shared = SettingsStore()
 
-    @Published var suppressOnAC: Bool {
+    @Published public var suppressOnAC: Bool {
         didSet { defaults.set(suppressOnAC, forKey: Keys.suppressOnAC) }
     }
-    @Published var suppressOnBattery: Bool {
+    @Published public var suppressOnBattery: Bool {
         didSet { defaults.set(suppressOnBattery, forKey: Keys.suppressOnBattery) }
     }
-    @Published var useBlackWhiteIcons: Bool {
+    @Published public var useBlackWhiteIcons: Bool {
         didSet { defaults.set(useBlackWhiteIcons, forKey: Keys.useBlackWhiteIcons) }
     }
-    @Published var launchAtLogin: Bool {
+    @Published public var launchAtLogin: Bool {
         didSet { LoginItem.set(enabled: launchAtLogin) }
     }
 
@@ -27,7 +27,7 @@ final class SettingsStore: ObservableObject {
         static let launchAtLogin = "launchAtLogin"
     }
 
-    init(defaults: UserDefaults = .standard) {
+    public init(defaults: UserDefaults = .standard) {
         suppressOnAC = defaults.object(forKey: Keys.suppressOnAC) as? Bool ?? false
         suppressOnBattery = defaults.object(forKey: Keys.suppressOnBattery) as? Bool ?? false
         useBlackWhiteIcons = defaults.object(forKey: Keys.useBlackWhiteIcons) as? Bool ?? true
@@ -36,7 +36,7 @@ final class SettingsStore: ObservableObject {
 
     /// Target for the power source we are on right now (NoSleep's
     /// per-source independence, minus the version-specific storage).
-    func targetFor(powerSource: PowerSource) -> Bool? {
+    public func targetFor(powerSource: PowerSource) -> Bool? {
         switch powerSource {
         case .ac: return suppressOnAC
         case .battery: return suppressOnBattery

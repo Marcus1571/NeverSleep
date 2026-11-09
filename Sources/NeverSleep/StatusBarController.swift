@@ -26,6 +26,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.delegate = self
         statusItem.menu = menu
         renderIcon(active: false)
+        rebuildMenu()   // read-only path never calls update(); menu must still have Quit
     }
 
     func update(powerSource: PowerSource, active: Bool) {
