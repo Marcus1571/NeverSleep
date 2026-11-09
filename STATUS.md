@@ -1,0 +1,36 @@
+# STATUS.md
+
+Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSleep).
+
+## Current state
+
+- Repo `Marcus1571/NeverSleep` created public 2026-11-09, checkout exists on the operator's machines per the two-checkout convention.
+- Research complete — original NoSleep located (repo, MacUpdate page, changelog), full feature map extracted from its source, modern macOS mechanism identified. All evidence in `findings.md` with a verdict.
+- Design decided (see `KB.md` "Approach"): SwiftUI menu-bar app + privileged helper toggling `pmset ... disablesleep`, restore-on-quit, separate battery/AC state, optional auto-lock.
+- Icon: recolored derivative of the NoSleep "Zz" asset shipped under `art/` (colors changed at the operator's request; provenance comment in each file).
+
+## In flight
+
+Nothing — no code written yet.
+
+## Not started (ordered)
+
+1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
+2. Privileged helper: prompt once (SMJobBless-style), then `pmset -b disablesleep 1|0` on battery (the exact AC-side wording, `-a` vs per-source, is decided at implementation time; see `findings.md`).
+3. Quit = restore: app delegates `applicationWillTerminate` + explicit toggle-off on sign-out to never leave the Mac awake after the app exits.
+4. Battery/AC separate toggles + live power-source detection (read out of IOPS).
+5. "Require password on display opening" option when lid closes.
+6. Auto lock screen option and persistence add-ons.
+7. Preferences surface mirroring the NoSleep pane (startup item, etc.), parity check against the feature contract in `KB.md` before calling anything complete.
+8. Packaging + signed release discipline before publicizing the repo anywhere.
+
+## Open questions / blocked
+
+- The operator mentioned prior settings work on "macai" (their Mac) that may have flipped these pmset knobs permanently. That host is not SSH-reachable at session start (2026-11-09); once accessible, check `pmset -g` on it for already-set `disablesleep`/related keys before the first prototype install, to avoid shipping an app that double-manages an existing OS setting.
+- Spotlight/behavior differences on Apple Silicon with `disablesleep` (classic PM path) — needs one laptop test before claiming parity; treat as unverified until then.
+
+## Decisions this session
+
+- App name: NeverSleep (operator's choice) — see `findings.md` for a naming-collision note (an entirely separate "NEVER SLEEP" watch app exists on the store; unconflicting).
+- License: MIT for code, GPL-2.0 inherited only for the derived art (see `AGENTS.md`).
+- Target mechanism: pmset-based, not a revival of the kext path (see `findings.md` verdict entries 1 and 4).

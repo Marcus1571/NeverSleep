@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+*/.DS_Store
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+# Swift package
+.build/
+# editor
+.vscode/
+.idea/
+# screenshots dir (per project-governance: operator drops shots, never commit real host UI)
+screenshots/
