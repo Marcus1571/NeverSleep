@@ -2,7 +2,9 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
-## [Unreleased] — 2026-11-09: first real compile + install on the Mac (commit 1a17886)
+## [0.1.1] — 2026-11-09: first real compile + install on the Mac
+
+Version bump: patch (pre-1.0, so important fixes go one level down per `USER.md`). 0.1.0 was never tagged; it never compiled. Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.1.0 → 0.1.1.
 
 Code was written on LT without a toolchain; this is everything changed to make it compile and behave correctly against real macOS 27 output. Evidence in `findings.md` §8.
 
