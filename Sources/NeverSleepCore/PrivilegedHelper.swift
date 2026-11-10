@@ -113,7 +113,10 @@ public enum PrivilegedHelper {
         defer { try? FileManager.default.removeItem(at: tmpPlist) }
 
         // Single-line script (osascript "do shell script" round-trips it to
-        // root sh). bootout before bootstrap so reinstalls replace cleanly.
+        // root sh). File steps chain with &&; the two launchctl steps run
+        // unconditionally after them — bootout exits non-zero when the service
+        // is not loaded (first install) and must not stop the bootstrap (that
+        // exact bug silently killed v0.3.0 installs).
         let script = [
             "mkdir -p /Library/PrivilegedHelperTools",
             "cp -f '\(bundled)' \(daemonBinaryPath)",
@@ -122,9 +125,8 @@ public enum PrivilegedHelper {
             "cp -f '\(tmpPlist.path)' \(launchdPlistPath)",
             "chown root:wheel \(launchdPlistPath)",
             "chmod 0644 \(launchdPlistPath)",
-            "launchctl bootout system/\(label) >/dev/null 2>&1",
-            "launchctl bootstrap system \(launchdPlistPath)",
         ].joined(separator: " && ")
+            + "; launchctl bootout system/\(label) >/dev/null 2>&1; launchctl bootstrap system \(launchdPlistPath)"
 
         Log.info("helper install: requesting one admin prompt")
         guard runAsRoot(script) else {

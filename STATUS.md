@@ -17,7 +17,7 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.2.1 released** (2026-11-10): NoSleep-style menu-bar states (parity feature 3) — filled Zz while suppressing, outline Zz while normal sleep (outline glyph derived from the original's `Icons/ZzOutline.svg`, recolored per the art provenance rules; both shipped as vector PDFs, template in B/W mode).
 
-**v0.3.0 released** (2026-11-10): privileged root helper (`neversleep-helper` LaunchDaemon, installed once via a single admin prompt) — toggles, quit-restore and `neversleepctl` are password-free from then on; per-write osascript prompts remain as fallback when declined. Daemon protocol + security model in `KB.md` "Privileged helper".
+**v0.3.0 released** (2026-11-10): privileged root helper (`neversleep-helper` LaunchDaemon, installed once via a single admin prompt) — toggles, quit-restore and `neversleepctl` are password-free from then on; per-write osascript prompts remain as fallback when declined. Daemon protocol + security model in `KB.md` "Privileged helper". **0.3.1 hotfix same day:** the install script's `bootout && bootstrap` chain skipped the bootstrap on first install (bootout exits non-zero when not loaded), so 0.3.0 installs never started the daemon — fixed, one reinstall prompt required for 0.3.0-era installs.
 
 ## Not started (ordered)
 

@@ -2,6 +2,13 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.3.1] — 2026-11-10: fix helper install losing the launchd bootstrap
+
+Version bump: patch (fix of 0.3.0's install path, no behavior beyond that). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.3.0 → 0.3.1.
+
+**Bug fix (behavior change: the helper actually installs now)**
+- `Sources/NeverSleepCore/PrivilegedHelper.swift` — the install root script chained `launchctl bootout … && launchctl bootstrap …`. On a first install the service is not loaded, so `bootout` exits non-zero and `&&` silently skipped the `bootstrap`: files landed, daemon never started, install() reported failure and every toggle kept using the v0.1 per-write osascript password (the exact opposite of the feature). Now the two launchctl steps run unconditionally after the file steps (`;`-joined, only the file steps chain with `&&`). Before: one password spent, zero prompts saved.
+
 ## [0.3.0] — 2026-11-10: privileged helper — one password ever (parity with NoSleep's KextHelper)
 
 Version bump: minor (real new capability; pre-1.0, same scale per `USER.md`). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.2.1 → 0.3.0.
