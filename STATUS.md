@@ -15,6 +15,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.2.0 released** (2026-11-10): launch-at-login via `SMAppService.mainApp` (dotbar's mechanism; parity feature 7), checkmark menu item + Preferences toggle, setting finally persists across restarts. Registered bundle is visible/reversible in System Settings › General › Login Items. Built and reinstalled to `/Applications` same day.
 
+**v0.2.1 released** (2026-11-10): NoSleep-style menu-bar states (parity feature 3) — filled Zz while suppressing, outline Zz while normal sleep (outline glyph derived from the original's `Icons/ZzOutline.svg`, recolored per the art provenance rules; both shipped as vector PDFs, template in B/W mode).
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.

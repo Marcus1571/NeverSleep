@@ -10,7 +10,7 @@ Reproduced from NoSleep v1.5.x source and changelog (research trail in `findings
 |---|---|---|
 | 1 | Never sleep on AC Adapter | Independent toggle, applies only when the Mac is on AC |
 | 2 | Never sleep on Battery | Independent toggle, applies only on battery |
-| 3 | Menu-bar "Zz" toggle | Filled Zz = awake-when-closed active; outline/faded = inactive; one click toggles the mode that matches the *current* power source |
+| 3 | Menu-bar "Zz" toggle | Filled Zz = awake-when-closed active; outline = inactive (**implemented 0.2.1**, imitating the original's `ZzActive`/`ZzInactive` template-image swap on state change); one click toggles the mode that matches the *current* power source |
 | 4 | Use black and white menu bar icons | Preference: monochrome vs. accent-colored icons |
 | 5 | Use double click to activate | Double-click on the icon toggles like the single-click path |
 | 6 | Require password on display opening | **Dropped** (decision, 2026-11-09): no auto-lock at all — closing the lid turns the display off natively and the session stays unlocked; users lock by hand (`Control-Command-Q`) when they want to |

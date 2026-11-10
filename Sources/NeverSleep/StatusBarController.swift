@@ -43,20 +43,31 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func renderIcon(active: Bool) {
-        // SF Symbol "zzz" exists on macOS 11+; template rendering gives the B/W
-        // menu-bar behavior on light+dark for free. Colored mode = symbol with
-        // the cyan tint NeverSleep uses in its art.
-        let img = NSImage(systemSymbolName: "zzz", accessibilityDescription: "NeverSleep") ?? NSImage()
-        if !settings.useBlackWhiteIcons, active {
-            let tinted: NSImage = img.tinted(with: NSColor(red: 0.31, green: 0.79, blue: 0.91, alpha: 1.0))
-            statusItem.button?.image = tinted
-        } else if !settings.useBlackWhiteIcons, !active {
-            let tinted: NSImage = img.tinted(with: .lightGray)
-            statusItem.button?.image = tinted
+        // NoSleep parity #3 (imitating the original app): filled Zz glyph while
+        // suppression is active, outline Zz glyph while normal sleep — the exact
+        // pair the original swapped on state change (ZzActive/ZzInactive, both
+        // template). We ship both derived glyphs as vector PDFs; the SF-Symbol
+        // "zzz" stays as the fallback for a bare `swift run` (no bundle).
+        let glyph = active ? "menubar-z-active" : "menubar-z-inactive"
+        var img: NSImage
+        if let url = Bundle.main.url(forResource: glyph, withExtension: "pdf"),
+           let bundled = NSImage(contentsOf: url) {
+            img = bundled
         } else {
-            img.isTemplate = true
-            statusItem.button?.image = img
+            img = NSImage(systemSymbolName: "zzz", accessibilityDescription: "NeverSleep") ?? NSImage()
         }
+        if settings.useBlackWhiteIcons {
+            // Template rendering gives the B/W menu-bar behavior on light+dark
+            // for free (alpha decides the shape; menu-tint does the coloring).
+            img.isTemplate = true
+        } else if active {
+            let tinted: NSImage = img.tinted(with: NSColor(red: 0.31, green: 0.79, blue: 0.91, alpha: 1.0))
+            img = tinted
+        } else {
+            let tinted: NSImage = img.tinted(with: .lightGray)
+            img = tinted
+        }
+        statusItem.button?.image = img
         statusItem.button?.toolTip = active
             ? "NeverSleep: awake with lid closed (\(powerSource.rawValue))"
             : "NeverSleep: normal sleep"

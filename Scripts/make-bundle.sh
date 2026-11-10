@@ -22,8 +22,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <plist version="1.0"><dict>
   <key>CFBundleName</key><string>NeverSleep</string>
   <key>CFBundleIdentifier</key><string>app.legba.neversleep</string>
-  <key>CFBundleVersion</key><string>0.2.0</string>
-  <key>CFBundleShortVersionString</key><string>0.2.0</string>
+  <key>CFBundleVersion</key><string>0.2.1</string>
+  <key>CFBundleShortVersionString</key><string>0.2.1</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>NeverSleep</string>
   <key>CFBundleIconFile</key><string>NeverSleep</string>
@@ -34,6 +34,12 @@ PLIST
 
 echo "==> icon (rasterize art/neversleep-app-icon.svg -> icns)"
 bash "$ROOT/Scripts/make-iconset.sh" "$APP/Contents/Resources/NeverSleep.icns"
+
+echo "==> menubar state icons (art/menubar-z-{active,inactive}.svg -> vector PDFs)"
+# Both must exist for the filled-vs-outline status swap (NoSleep parity #3); die if missing.
+for state in active inactive; do
+  rsvg-convert -f pdf -o "$APP/Contents/Resources/menubar-z-$state.pdf" "$ROOT/art/menubar-z-$state.svg"
+done
 
 echo "==> ad-hoc codesign"
 codesign --force --sign - "$APP" 2>/dev/null || true

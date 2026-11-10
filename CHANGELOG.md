@@ -2,6 +2,15 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.2.1] — 2026-11-10: NoSleep-style status icon states (parity feature 3)
+
+Version bump: patch (visual refinement of the existing icon-swap behavior, per `USER.md`). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.2.0 → 0.2.1.
+
+**Behavior change (visual)**
+- `art/menubar-z-inactive.svg` — replaced: the inactive menu-bar glyph is now the **outline** Zz (geometry verbatim from the original repo's `Icons/ZzOutline.svg`, recolored to the NeverSleep cyan per the established art provenance rules; GPL-2.0 inherited). Before: the inactive state re-used the filled glyph at 35% opacity — barely visible in B/W template mode, and not the NoSleep look.
+- `Sources/NeverSleep/StatusBarController.swift` — the status icon now swaps between the two **derived glyph PDFs** bundled by `make-bundle.sh`, imitating the original app's state swap (`ZzActive.pdf`/`ZzInactive.pdf`, both `template`): filled Zz while suppression is active, outline Zz while normal sleep. B/W mode renders both as template images (adaptive light/dark); colored mode keeps the existing tints (cyan = active, lightGray = inactive). Falls back to the SF-Symbol "zzz" when running without a bundle (bare `swift run`). Before: a single SF Symbol whose tint mocked the distinction — no filled/outline difference at all.
+- `Scripts/make-bundle.sh` — now converts both `art/menubar-z-{active,inactive}.svg` to vector PDFs into the bundle's Resources (the pipeline KB already prescribed, previously never actually wired).
+
 ## [0.2.0] — 2026-11-10: launch at login (parity feature 7)
 
 Version bump: minor (real new feature; pre-1.0, same scale per `USER.md`). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.1.1 → 0.2.0.
