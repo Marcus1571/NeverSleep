@@ -6,6 +6,26 @@ NeverSleep is a lean macOS menu-bar app that keeps a MacBook **fully awake with 
 
 NoSleep solved this with a kernel extension, which modern macOS (SIP + user-approved kext loading) made unmaintainable; it was deprecated in ~2019. NeverSleep ships the same user-facing feature contract on the modern mechanism instead: a runtime toggle of the OS's own sleep-disable behavior ([KB.md — Approach](KB.md#approach)), applied only while NeverSleep runs and restored when it quits.
 
+**What it looks like**
+
+The app icon — the recolored "Zz" plate:
+
+<div align="center">
+  <img src="docs/img/app-icon.png" width="110" alt="NeverSleep app icon: dark rounded square with the cyan Zz glyph">
+</div>
+
+The menu-bar icon tells you the state instantly, imitating the original NoSleep's filled/outline swap — **filled `Zz` = awake-when-closed active**, **outline `Zz` = normal macOS sleep**:
+
+| Normal sleep | Awake with lid closed |
+|--------------|----------------------|
+| <img src="docs/img/icon-normal-sleep.png" width="40" alt="menu bar icon: outline Zz, normal sleep"> | <img src="docs/img/icon-awake.png" width="40" alt="menu bar icon: filled Zz, awake-when-closed active"> |
+
+Clicking it opens the menu (toggle, live power source, Check for Updates, Preferences, Launch at login):
+
+| Menu | Preferences |
+|------|-------------|
+| <img src="docs/img/menu.png" width="300" alt="NeverSleep menu: Restore normal sleep, power source, Check for Updates, Preferences, Launch at login, Quit"> | <img src="docs/img/preferences.png" width="300" alt="Preferences: separate AC/battery toggles, black-and-white icons, launch at login"> |
+
 **What it does (v0 spec, representative — full contract in [KB.md — Feature contract](KB.md#feature-contract-from-nosleep)):**
 
 - One menu-bar toggle (`Zz` icon, filled = awake): closes-the-lid sleep prevention, per power source
