@@ -2,6 +2,19 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.4.0] — 2026-11-10: Developer ID distribution + Sparkle self-updating (parity feature 8)
+
+Version bump: minor (major new capability: real distribution + self-updates; pre-1.0, same scale per `USER.md`). Bundle version now follows the latest CHANGELOG heading automatically (`scripts/make-app.sh`), CFBundleVersion is the numeric stamp (0.4.0 → 40000) that Sparkle compares.
+
+**Decision reversal (operator's new fact: full Apple Developer status):** 2026-11-09 dropped auto-updates and settled on ad-hoc signing because no Developer ID existed. 2026-11-10 the operator acquired it and asked for diskled-plus's distribution pipeline. Feature 8 (automatically check for updates) is back in the contract — now implemented.
+
+**Behavior change (new feature)**
+- `Sources/NeverSleep/AppDelegate.swift` + `StatusBarController.swift` — Sparkle 2.8 embedded (SwiftPM product, copied as a framework into `Contents/Frameworks`): scheduled checks at startup + weekly, automatic installs, and a **Check for Updates…** menu item (⌘U) targeting `SPUStandardUpdaterController` directly, present only when running from a bundle (bare `swift run` has nothing to update). A Sparkle update swaps the app bundle; the root helper keeps running from `/Library/PrivilegedHelperTools` until its next reinstall — protocol handshake handles the drift (see `KB.md` "Privileged helper").
+- `Scripts/make-app.sh` (replaces the retired `make-bundle.sh`) — full bundle assembly: Sparkle framework + rpath, menubar state PDFs, app icon icns, privileged helper binary, and signing deepest-first (helper → Sparkle framework → app) with Developer ID + hardened runtime + timestamp when `"Developer ID"` is passed, ad-hoc otherwise. Info.plist gains `SUFeedURL` (appcast on `main` of this repo), `SUPublicEDKey`, automatic checks + weekly interval + auto-install.
+- `Scripts/make-dmg.sh` — distribution DMG (`NeverSleep-<version>.dmg`), Developer ID–signed container, notarized via `notarytool` (shared keychain profile `diskledplus-notary`, same Apple ID as diskled-plus) and stapled; falls back to a warning when no profile exists (local-use-only DMG).
+- `Scripts/make-appcast.sh` — regenerates `appcast.xml` (EdDSA `sparkle:edSignature` via Sparkle's `sign_update`, enclosure URL pointing at the GitHub Release asset; release notes link to the release page). Same Sparkle EdDSA key pair as diskled-plus (operator's login keychain).
+- Release-order note for this project: tag + GitHub Release **with the DMG asset** must exist before the appcast commit is pushed, since the feed references the asset URL.
+
 ## [0.3.3] — 2026-11-10: fix the inactive icon clipping (outline glyph fit to canvas)
 
 Version bump: patch (visual fix). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.3.2 → 0.3.3.

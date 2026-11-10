@@ -23,6 +23,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.3.3 hotfix same day:** inactive menu-bar icon clipped at the top right — the outline glyph's original canvas is wider (22.5×20) than the 20×20 box it was pasted into; now scaled uniformly to fit, both states share the same icon box.
 
+**v0.4.0 released** (2026-11-10): full diskled-plus distribution pipeline — Developer ID–signed app (hardened runtime), notarized + stapled DMG, Sparkle 2.8 self-updating (startup + weekly, auto-install, Check for Updates… ⌘U), EdDSA-signed appcast on repo `main`. Reverses the 2026-11-09 "ad-hoc only / no auto-updates" decision (operator acquired the Developer ID; feature 8 back in contract). `make-bundle.sh` retired in favor of `make-app.sh`/`make-dmg.sh`/`make-appcast.sh` (version now follows the latest CHANGELOG heading automatically). Local `/Applications` install upgraded to the signed build same day. Note: the running root daemon is still the 0.3.x protocol-v1 build — the next toggle offers the one-time helper reinstall (protocol v2), after which all toggles are password-free.
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.

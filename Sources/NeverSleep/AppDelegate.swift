@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Combine
+import Sparkle
 import NeverSleepCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -10,6 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var prefsWindow: NSWindow?
     private var menuUpdater: AnyCancellable?
     private var lastKnownPowerSource: PowerSource = .unknown
+    // Sparkle: nil for bare-binary launches (Sparkle can only update a bundled app).
+    private var updaterController: SPUStandardUpdaterController?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         Log.info("launched: build=\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? "?"))")
@@ -37,15 +40,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                                 onToggle: { [weak self] on in self?.handleToggle(on) },
                                                 onOpenPrefs: { [weak self] in self?.openPreferences() },
                                                 onQuit: { [weak self] in self?.quitClean() },
+                                                updater: nil,
                                                 externallySuppressed: true)
                 return
             }
         }
         controller.captureBaseline()
+        // Sparkle scheduler comes from Info.plist (check at startup, weekly
+        // interval); only when running from a bundle — bare `swift run` has
+        // nothing to update. NeverSleep installs a root helper: a Sparkle
+        // update swaps the app bundle, while the daemon keeps running the
+        // version in /Library/PrivilegedHelperTools until the next helper
+        // reinstall (handshake/protocol handles the drift — see KB).
+        if Bundle.main.bundlePath.hasSuffix(".app") {
+            updaterController = SPUStandardUpdaterController(startingUpdater: true,
+                                                             updaterDelegate: nil,
+                                                             userDriverDelegate: nil)
+        }
         statusBar = StatusBarController(settings: settings,
                                         onToggle: { [weak self] on in self?.handleToggle(on) },
                                         onOpenPrefs: { [weak self] in self?.openPreferences() },
                                         onQuit: { [weak self] in self?.quitClean() },
+                                        updater: updaterController,
                                         externallySuppressed: false)
         pollPowerSource(initial: true)
         schedulePowerSourcePolling()

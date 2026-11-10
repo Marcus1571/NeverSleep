@@ -1,0 +1,21 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>NeverSleep</title>
+    <link>https://raw.githubusercontent.com/Marcus1571/NeverSleep/main/appcast.xml</link>
+    <description>Most recent NeverSleep releases.</description>
+    <language>en</language>
+    <item>
+      <title>Version 0.4.0</title>
+      <pubDate>Tue, 10 Nov 2026 18:01:43 GMT</pubDate>
+      <sparkle:releaseNotesLink>https://github.com/Marcus1571/NeverSleep/releases/tag/v0.4.0</sparkle:releaseNotesLink>
+      <enclosure url="https://github.com/Marcus1571/NeverSleep/releases/download/v0.4.0/NeverSleep-0.4.0.dmg"
+                 sparkle:version="400"
+                 sparkle:shortVersionString="0.4.0"
+                 sparkle:edSignature="mJx/lN/hd5aqSZn3UaTlIrTUFg8NIhBFHXG72yhmptzZe10oGhMFdTxjjnXd7++ifqUG2bQ2383UuimmOV82AQ=="
+                 length="1527628"
+                 type="application/octet-stream" />
+      <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+    </item>
+  </channel>
+</rss>

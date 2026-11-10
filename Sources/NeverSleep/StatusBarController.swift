@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 import NeverSleepCore
 
 final class StatusBarController: NSObject, NSMenuDelegate {
@@ -7,6 +8,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private var onToggle: (Bool) -> Void
     private var onOpenPrefs: () -> Void
     private var onQuit: () -> Void
+    // Sparkle (bundled runs only): the menu item targets the updater directly.
+    private let updater: SPUStandardUpdaterController?
     private var externallySuppressed: Bool = false
     private var active: Bool = false
     private var powerSource: PowerSource = .unknown
@@ -15,11 +18,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
          onToggle: @escaping (Bool) -> Void,
          onOpenPrefs: @escaping () -> Void,
          onQuit: @escaping () -> Void,
+         updater: SPUStandardUpdaterController?,
          externallySuppressed: Bool) {
         self.settings = settings
         self.onToggle = onToggle
         self.onOpenPrefs = onOpenPrefs
         self.onQuit = onQuit
+        self.updater = updater
         self.externallySuppressed = externallySuppressed
         super.init()
         let menu = NSMenu()
@@ -86,6 +91,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let power = NSMenuItem(title: "Power source: \(powerSource.rawValue)", action: nil, keyEquivalent: "")
         power.isEnabled = false
         menu.addItem(power)
+        if let updater {
+            // Sparkle's standard target/action; enabled state handled by Sparkle itself.
+            let checkUpdates = NSMenuItem(title: "Check for Updates…",
+                                          action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+                                          keyEquivalent: "u")
+            checkUpdates.target = updater
+            menu.addItem(checkUpdates)
+        }
         let prefs = NSMenuItem(title: "Preferences…", action: #selector(openPreferences(_:)), keyEquivalent: ",")
         prefs.target = self
         menu.addItem(prefs)

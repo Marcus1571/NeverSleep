@@ -32,11 +32,11 @@ cd ~/src/NeverSleep
 #    Never weaken a runtime check to satisfy the compiler — raise it to the maintainer instead.
 swift build -c release
 
-# 4. Package (builds the .app, rasterizes art/neversleep-app-icon.svg to .icns, ad-hoc signs)
-./Scripts/make-bundle.sh
+# 4. Package (assembles the .app: Sparkle framework, icon, menubar glyphs, helper; ad-hoc signs by default)
+./Scripts/make-app.sh
 
 # 5. Install + smoke test
-cp -R build/NeverSleep.app /Applications/
+rm -rf /Applications/NeverSleep.app && ditto .build/app/NeverSleep.app /Applications/NeverSleep.app
 open /Applications/NeverSleep.app
 # smoke test: toggle "Keep awake with lid closed", close the lid, reopen it — the session must still be live
 #             (audio/video calls keep running with the screen off). Then quit the app and verify sleep behaves
@@ -59,6 +59,6 @@ lipo -create build/opt/arm64/NeverSleep build/opt/x86_64/NeverSleep -output buil
 
 ### What the build must NOT do
 
-- No Developer ID/notarized distribution steps — the repo ships source; sign only ad-hoc (`codesign -s -`, already in the bundle script).
+- Distribution: `scripts/make-dmg.sh <version> "Developer ID"` builds the notarized + stapled DMG that GitHub Releases ship, and `scripts/make-appcast.sh <version>` refreshes the self-update feed (Sparkle: startup + weekly checks, auto-install). Without the Developer ID identity everything falls back to ad-hoc — see `KB.md` "Build & test".
 - No ci.yml, no Playwright, no worktrees: plain `swift build` on `main`.
 

@@ -15,7 +15,7 @@ Reproduced from NoSleep v1.5.x source and changelog (research trail in `findings
 | 5 | Use double click to activate | Double-click on the icon toggles like the single-click path |
 | 6 | Require password on display opening | **Dropped** (decision, 2026-11-09): no auto-lock at all — closing the lid turns the display off natively and the session stays unlocked; users lock by hand (`Control-Command-Q`) when they want to |
 | 7 | Start NoSleep utility on system startup | Login item (**implemented 0.2.0**): `SMAppService.mainApp`, macOS 13+ (LaunchAgent plist fallback on 11–12); menu checkmark + Preferences toggle |
-| 8 | Automatically check for updates | Sparkle or osx-updater equivalent — decide at implementation |
+| 8 | Automatically check for updates | **Implemented 0.4.0**: Sparkle 2.8 embedded — startup + weekly checks, automatic installs, Check for Updates… menu item (⌘U); appcast EdDSA-signed on repo `main` (Dropped 2026-11-09 for lack of a Developer ID; reversed 2026-11-10 when the operator acquired one — see the 0.4.0 CHANGELOG entry) |
 | 9 | Command-line interface | `neversleepctl` (state on/off/status), so scripts can flip it like `NoSleepCtrl` could |
 | 10 | State survives reboot | NoSleep persisted via NVRAM from the kext; NeverSleep persists in defaults and re-arms at launch — but *only while the app runs* (see "Never leaves the Mac awake", below) |
 
@@ -40,9 +40,14 @@ Explicitly out of contract (was never NoSleep behavior): forcing the display off
 
 ## Build & test
 
-- Toolchain: SwiftPM with the Command Line Tools only (no Xcode project). `swift build -c release`, then `Scripts/make-bundle.sh` assembles `build/NeverSleep.app` (Info.plist, icns, ad-hoc signature). Menu bar via `NSStatusItem` (not `MenuBarExtra`), SwiftUI only for the Preferences window. Three SwiftPM targets: `NeverSleepCore` (library — anything the app or CLI calls must be `public`), `NeverSleep` (app, entry in `main.swift`), `neversleepctl` (CLI).
+- Toolchain: SwiftPM with the Command Line Tools only (no Xcode project). Three SwiftPM targets: `NeverSleepCore` (library — anything the app or CLI calls must be `public`), `NeverSleep` (app, entry in `main.swift`, Sparkle-updated), `neversleepctl` (CLI), plus `neversleep-helper` (root LaunchDaemon target). Menu bar via `NSStatusItem` (not `MenuBarExtra`), SwiftUI only for the Preferences window.
+- **Local dev build:** `swift build -c release`, then `scripts/make-app.sh` (ad-hoc by default). The version comes from the latest CHANGELOG heading; CFBundleVersion is the numeric stamp Sparkle compares.
+- **Distribution build (Developer ID, notarized DMG, what GitHub Releases ship):** `scripts/make-dmg.sh <version> "Developer ID"` → signs the app + helper with the Developer ID Application cert (hardened runtime, timestamped), builds the DMG, notarizes via the shared `diskledplus-notary` keychain profile (same Apple ID as diskled-plus; override with `NOTARY_PROFILE=<name>`) and staples it. Output: `.build/dist/NeverSleep-<version>.dmg`.
+- **Appcast:** after the DMG exists and the GitHub Release with that DMG asset is published, run `scripts/make-appcast.sh <version>` and push `appcast.xml` (push order: tag → GitHub Release with DMG → appcast commit → `git push origin main`; the feed's enclosure URL points at the release asset).
+- **Install an update locally:** quit the running app, then `rm -rf /Applications/NeverSleep.app && ditto .build/app/NeverSleep.app /Applications/NeverSleep.app` (`cp -R` copies INTO an existing directory — findings.md §9) and relaunch.
 - If `swift build` fails on *any* package with `Undefined symbols … PackageDescription.Package.__allocating_init`, the Command Line Tools have stale `*.private.swiftinterface` files in `ManifestAPI/PackageDescription.swiftmodule`; move them out or reinstall CLT (`findings.md` §8).
 - Runtime log: `~/Library/Logs/NeverSleep.log` (plus os_log subsystem `app.legba.neversleep`).
+- Sparkle notes: the appcast feed URL and `SUPublicEDKey` are baked into Info.plist by `make-app.sh`; the EdDSA private key lives in the login keychain (shared with diskled-plus — same operator key pair). Sparkle only runs when the app is a bundle; scheduled checks are startup + weekly with automatic installs.
 
 ### pmset output the parsers rely on (verified macOS 27, 2026-11-09)
 

@@ -1,0 +1,108 @@
+#!/bin/sh
+# Builds .build/app/NeverSleep.app from a fresh release build.
+#
+# Usage: scripts/make-app.sh [version] [identity]
+#   version — defaults to the most recent version heading in CHANGELOG.md.
+#   identity — Apple codesign identity for the final signed build:
+#     pass "Developer ID" to sign with the Developer ID Application cert
+#     (hardened runtime, timestamped — required for notarization), or omit to
+#     sign ad-hoc (local development installs).
+#
+# Output: .build/app/NeverSleep.app
+# Install: cp -R ".build/app/NeverSleep.app" /Applications/
+# (replacing an existing install is rm -rf + ditto — see findings.md §9)
+set -eu
+
+cd "$(cd "$(dirname "$0")/.." && pwd)"
+
+VERSION="${1:-$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '[]' | sed 's/^## //')}"
+IDENTITY="${2:-}"
+APP_DIR=".build/app/NeverSleep.app"
+CONTENTS="$APP_DIR/Contents"
+
+# Sparkle artifacts from the SwiftPM build (path: .build/artifacts/...):
+SPARKLE_FRAMEWORK=".build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+
+# Numeric build stamp derived from X.Y.Z (CFBundleVersion): 0.4.0 -> 400.
+NUMERIC_VERSION="$(echo "$VERSION" | awk -F. '{print $1*10000+$2*100+$3}')"
+
+swift build -c release
+
+rm -rf "$APP_DIR"
+mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources" "$CONTENTS/Frameworks"
+
+cp .build/release/NeverSleep "$CONTENTS/MacOS/NeverSleep"
+
+# Sparkle is linked as a dynamic framework; the binary expects it at
+# @executable_path/../Frameworks. The framework ships with its XPC services and
+# the Autoupdate helper — copy the whole thing.
+cp -R "$SPARKLE_FRAMEWORK" "$CONTENTS/Frameworks/"
+install_name_tool -add_rpath "@executable_path/../Frameworks" \
+    "$CONTENTS/MacOS/NeverSleep" 2>/dev/null || true
+
+cat > "$CONTENTS/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>NeverSleep</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.legba.neversleep</string>
+	<key>CFBundleExecutable</key>
+	<string>NeverSleep</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${VERSION}</string>
+	<key>CFBundleVersion</key>
+	<string>${NUMERIC_VERSION}</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
+	<key>CFBundleIconFile</key>
+	<string>NeverSleep</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/Marcus1571/NeverSleep/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>4X6j0DXdJCmcxqe3fkMKWxKuuHhhM+rYrK5LauHe9UA=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>604800</integer>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+</dict>
+</plist>
+PLIST
+
+# App icon: art/neversleep-app-icon.svg -> icns (existing pipeline).
+bash Scripts/make-iconset.sh "$CONTENTS/Resources/NeverSleep.icns"
+
+# Menubar state icons: both glyphs must exist for the filled-vs-outline swap
+# (NoSleep parity #3); vector PDFs, template-rendered at runtime.
+for state in active inactive; do
+  rsvg-convert -f pdf -o "$CONTENTS/Resources/menubar-z-$state.pdf" "art/menubar-z-$state.svg"
+done
+
+# Privileged helper binary: the app installs this to /Library/PrivilegedHelperTools
+# on first toggle (see KB "Privileged helper"). Signed before the app seal.
+cp .build/release/neversleep-helper "$CONTENTS/Resources/neversleep-helper"
+
+# Sign deepest-first: nested executables (Sparkle framework with its XPC
+# services and Autoupdate helper, and our helper binary) need valid signatures
+# before the app seal — and before notarization can even attempt.
+if [ -n "$IDENTITY" ]; then
+    codesign --force --options runtime --timestamp --sign "$IDENTITY" \
+        "$CONTENTS/Resources/neversleep-helper"
+    codesign --force --options runtime --timestamp --deep --sign "$IDENTITY" "$CONTENTS/Frameworks/Sparkle.framework"
+    codesign --force --options runtime --timestamp --sign "$IDENTITY" "$APP_DIR"
+else
+    codesign --force --sign - "$CONTENTS/Resources/neversleep-helper"
+    codesign --force --deep --sign - "$CONTENTS/Frameworks/Sparkle.framework"
+    codesign --force --deep --sign - "$APP_DIR"
+fi
+
+echo "Built $APP_DIR (version ${VERSION}, build ${NUMERIC_VERSION})"
+echo "Install:  rm -rf /Applications/NeverSleep.app && ditto \"$APP_DIR\" /Applications/NeverSleep.app"
