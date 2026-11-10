@@ -2,6 +2,13 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.3.3] — 2026-11-10: fix the inactive icon clipping (outline glyph fit to canvas)
+
+Version bump: patch (visual fix). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.3.2 → 0.3.3.
+
+**Bug fix (visual)**
+- `art/menubar-z-inactive.svg` — the outline glyph (inherited verbatim from the original's `ZzOutline.svg`) is drawn on a wider canvas there (22.5×20): its small z reaches x=17.5 in the 16-unit space, so pasting it into the 20×20 canvas clipped the top-right of the z in the menu bar. The glyph is now scaled uniformly (×0.8889) to fit the same 20×20 box as the filled active state — no clipping, and both states keep identical icon width (no horizontal jiggle on toggle). Before: small z cut off at the top right in the inactive state.
+
 ## [0.3.2] — 2026-11-10: fix the daemon's read-back verification (tab vs space)
 
 Version bump: patch (fix of 0.3.0–0.3.1 daemon behavior). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.3.1 → 0.3.2.

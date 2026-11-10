@@ -2,7 +2,10 @@
 <!--
 Icon derivatives of the "Zz" menu-bar/app assets of NoSleep
 (original repo: https://github.com/integralpro/nosleep, GPL-2.0; outline
-glyph geometry from Icons/ZzOutline.svg, verbatim).
+glyph geometry from Icons/ZzOutline.svg, verbatim). The original outline
+art sits on a wider canvas (22.5x20) — the small z reaches x=17.5 in the
+16-unit space — so the glyph is scaled uniformly (0.8889) to fit this
+20x20 canvas without clipping, matching the filled active state's box.
 Color scheme changed so the result is not a wholesale visual copy of
 the original artwork; glyph geometry is retained. Distributed under the
 same license the original uses (GPL-2.0) — see art/ART-LICENSE.md.
@@ -13,7 +16,7 @@ same license the original uses (GPL-2.0) — see art/ART-LICENSE.md.
    id="menubar-z-inactive-outline"
    width="20"
    height="20">
-  <g transform="matrix(1.25,0,0,-1.25,0,20)">
+  <g transform="matrix(1.11111111,0,0,-1.11111111,0,17.77777778)">
     <path
        d="m 0.5,11.5 9,0 0,-2 -4,-5 4,0 0,-3 -9,0 0,2 4,5 -4,0 z"
        style="fill:none;stroke:#4EC9E8;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1" />

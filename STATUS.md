@@ -21,6 +21,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.3.2 hotfix same day:** the daemon's verification looked for `"SleepDisabled 1"` (space) but `pmset -g` separates with tabs — writes of 1 took effect yet were reported `ERR verify`, so every activation showed "pmset rejected" while the Mac actually went quiet. Tolerant parser + `parsed=` field in the daemon log + protocol v2 (old daemons fail handshake → reinstall offered on next toggle).
 
+**v0.3.3 hotfix same day:** inactive menu-bar icon clipped at the top right — the outline glyph's original canvas is wider (22.5×20) than the 20×20 box it was pasted into; now scaled uniformly to fit, both states share the same icon box.
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
