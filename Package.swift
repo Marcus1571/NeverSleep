@@ -12,6 +12,10 @@ let package = Package(
             resources: []
         ),
         .executableTarget(
+            name: "neversleep-helper",
+            path: "Sources/neversleep-helper"
+        ),
+        .executableTarget(
             name: "neversleepctl",
             dependencies: ["NeverSleepCore"],
             path: "Sources/neversleepctl"

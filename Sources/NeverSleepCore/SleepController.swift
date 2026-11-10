@@ -7,8 +7,10 @@ import Foundation
 /// or architecture — anything the running build refuses is detected by reading
 /// results back, not hardcoded knowledge.
 ///
-/// Privilege note: pmset writes need root. In v1 every write goes through one
-/// system auth dialog (osascript "with administrator privileges"); reads don't.
+/// Privilege note: pmset writes need root. Since v0.3 the app routes writes
+/// through the root helper installed once (zero prompts afterwards); when no
+/// helper is installed, each write falls back to one system auth dialog
+/// (osascript "with administrator privileges"); reads don't need any of this.
 public final class SleepController {
     public enum Outcome: Equatable {
         case enabled(scope: String)
@@ -96,31 +98,103 @@ public final class SleepController {
 
     private func writeDisablesleep(_ value: Int) -> (Bool, String)? {
         if prefersBatteryScopedKey {
-            let args = "\(pmsetPath) -b disablesleep \(value)"
-            if admin.runAsRoot(args) {
+            switch admin.pmset(scope: "-b", value: value) {
+            case .ok:
                 let ok = readState()?.sleepDisabled == value
                 if ok { return (true, "battery-scoped (-b)") }
                 Log.error("-b write accepted but verification mismatched; trying -a")
+            case .refused(let why):
+                Log.error("pmset -b disablesleep \(value) refused: \(why)")
             }
             Log.error("pmset -b disablesleep refused or ineffective, falling back to -a")
             prefersBatteryScopedKey = false
         }
-        if admin.runAsRoot("\(pmsetPath) -a disablesleep \(value)") {
+        switch admin.pmset(scope: "-a", value: value) {
+        case .ok:
             return readState()?.sleepDisabled == value ? (true, "system-wide (-a)") : nil
+        case .refused(let why):
+            Log.error("pmset -a disablesleep \(value) refused: \(why)")
+            return nil
         }
-        return nil
     }
 }
 
-/// v1 privilege path: one auth dialog per write via osascript. Password never
-/// passes through this app — the system dialog handles it.
+/// Privilege path v0.3+: the root helper (`PrivilegedHelper`) answers pmset
+/// writes without any prompt, after its one-time install. When no helper is
+/// installed, the first privileged write triggers the install offer once per
+/// session; if the operator declines (or install fails), every write falls
+/// back to the v1 osascript dialog. The password never passes through this
+/// app in either path — system dialogs handle it.
 public final class AdminPrivileges {
     public static let shared = AdminPrivileges()
     init(commandPath: String = "/usr/bin/osascript") { self.commandPath = commandPath }
     private let commandPath: String
 
+    /// Set by the app layer (AppKit). Called once per session when a
+    /// privileged write is first needed and no healthy helper is installed.
+    /// Return true to attempt the install (one admin prompt follows), false
+    /// to fall back to per-write osascript prompts.
+    public var helperInstallOffer: (() -> Bool)?
+
+    private var helperOfferDecided = false
+    private var helperWanted = false
+
+    enum PrivilegedResult {
+        case ok
+        case refused(String)
+    }
+
+    /// Root pmset write, helper-first. `scope` is always an internal literal
+    /// ("-b"/"-a") — never user input.
+    func pmset(scope: String, value: Int) -> PrivilegedResult {
+        if !helperOfferDecided {
+            helperOfferDecided = true
+            if let hs = PrivilegedHelper.handshake() {
+                helperWanted = true
+                Log.info("privileged helper present: \(hs)")
+            } else if helperInstallOffer?() ?? false {
+                helperWanted = PrivilegedHelper.install(runAsRoot: runAsRoot)
+            } else {
+                helperWanted = false
+                Log.info("helper install declined this session; staying on per-write admin prompts")
+            }
+        }
+        if helperWanted {
+            switch PrivilegedHelper.pmset(scope: scope, value: value) {
+            case .success:
+                return .ok
+            case .failure(.notInstalled):
+                // Daemon vanished mid-session (removed by hand, launchd issue):
+                // one reinstall attempt before giving up to the legacy path.
+                Log.error("helper unreachable mid-session; attempting one reinstall")
+                helperWanted = PrivilegedHelper.install(runAsRoot: runAsRoot)
+                if helperWanted {
+                    switch PrivilegedHelper.pmset(scope: scope, value: value) {
+                    case .success: return .ok
+                    case .failure(.refused(let why)): return .refused(why)
+                    case .failure(.notInstalled): return .refused("helper unreachable")
+                    }
+                }
+                return .refused("helper unreachable")
+            case .failure(.refused(let why)):
+                return .refused(why)
+            }
+        }
+        // Legacy v1 path: one auth dialog per write. Password never passes
+        // through this app — the system dialog handles it.
+        return runAsRoot("/usr/bin/pmset \(scope) disablesleep \(value)")
+            ? .ok
+            : .refused("osascript pmset write failed")
+    }
+
+    /// Runs a shell script as root via one osascript administrator-privileges
+    /// dialog. Quotes are escaped for the AppleScript round-trip (scripts may
+    /// contain quoted paths).
     func runAsRoot(_ script: String) -> Bool {
-        let appleScript = "do shell script \"\(script)\" with administrator privileges"
+        let escaped = script
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let appleScript = "do shell script \"\(escaped)\" with administrator privileges"
         let task = Process()
         task.executableURL = URL(fileURLWithPath: commandPath)
         task.arguments = ["-e", appleScript]

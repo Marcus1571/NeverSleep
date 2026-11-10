@@ -2,6 +2,18 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.3.0] — 2026-11-10: privileged helper — one password ever (parity with NoSleep's KextHelper)
+
+Version bump: minor (real new capability; pre-1.0, same scale per `USER.md`). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.2.1 → 0.3.0.
+
+**Behavior change (new feature)**
+- `Sources/neversleep-helper/main.swift` (new SPM target) — root LaunchDaemon performing the one privileged job: `pmset [-b|-a] disablesleep 0|1` on request over a local unix socket. Fixed argv (no shell), read-back verification before answering `OK`, `getpeereid` peer-UID check against the installing user, every request logged to `/Library/Logs/NeverSleepHelper.log`.
+- `Sources/NeverSleepCore/PrivilegedHelper.swift` (new) — socket client (3 s timeouts on every op) + one-time install: copies the bundled helper to `/Library/PrivilegedHelperTools/app.legba.neversleep.helper` (root-owned, deliberately outside the user-writable app bundle), writes `/Library/LaunchDaemons/app.legba.neversleep.helper.plist`, bootstraps it, waits for handshake.
+- `Sources/NeverSleepCore/SleepController.swift` — `AdminPrivileges` is now helper-first: first privileged write without a helper triggers the install offer once per session; declining (or a failed install) falls back to the v1 osascript-per-write path. `writeDisablesleep` routes both scopes through the new `pmset(scope:value:)` result. Before: one admin password per write — toggle on, toggle off, and every quit-restore each prompted.
+- `Sources/NeverSleep/AppDelegate.swift` — the install offer alert ("last password you will ever type for NeverSleep"), plus a launch-time log line of helper presence.
+- `Scripts/make-bundle.sh` — ships the helper binary in the bundle's Resources.
+- Consequence for `neversleepctl`: script toggles are now password-free too once the helper is installed (parity feature 9's intent).
+
 ## [0.2.1] — 2026-11-10: NoSleep-style status icon states (parity feature 3)
 
 Version bump: patch (visual refinement of the existing icon-swap behavior, per `USER.md`). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.2.0 → 0.2.1.

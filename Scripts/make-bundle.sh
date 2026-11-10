@@ -22,8 +22,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <plist version="1.0"><dict>
   <key>CFBundleName</key><string>NeverSleep</string>
   <key>CFBundleIdentifier</key><string>app.legba.neversleep</string>
-  <key>CFBundleVersion</key><string>0.2.1</string>
-  <key>CFBundleShortVersionString</key><string>0.2.1</string>
+  <key>CFBundleVersion</key><string>0.3.0</string>
+  <key>CFBundleShortVersionString</key><string>0.3.0</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>NeverSleep</string>
   <key>CFBundleIconFile</key><string>NeverSleep</string>
@@ -40,6 +40,9 @@ echo "==> menubar state icons (art/menubar-z-{active,inactive}.svg -> vector PDF
 for state in active inactive; do
   rsvg-convert -f pdf -o "$APP/Contents/Resources/menubar-z-$state.pdf" "$ROOT/art/menubar-z-$state.svg"
 done
+
+echo "==> privileged helper binary (installed once to /Library/PrivilegedHelperTools by the app)"
+cp "$BUILD/neversleep-helper" "$APP/Contents/Resources/neversleep-helper"
 
 echo "==> ad-hoc codesign"
 codesign --force --sign - "$APP" 2>/dev/null || true

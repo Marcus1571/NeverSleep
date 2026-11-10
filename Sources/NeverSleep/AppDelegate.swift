@@ -16,6 +16,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // One-time privileged-helper offer: when the first privileged write is
+        // needed and no helper is installed, show what installing means and
+        // get the single confirmation. Declining keeps the v1 per-write
+        // osascript prompts. Only meaningful when running from the installed
+        // bundle (the helper binary ships inside it).
+        if Bundle.main.bundlePath.hasSuffix(".app") {
+            AdminPrivileges.shared.helperInstallOffer = { [weak self] in
+                self?.offerHelperInstall() ?? false
+            }
+        }
+        Log.info("privileged helper: \(PrivilegedHelper.handshake() ?? "not installed (will be offered on first toggle)")")
         // Safety gate: if the machine is already permanently awake (e.g. a
         // deliberate SleepDisabled 1 config), do not touch anything — warn only.
         if let state = controller.readState(), state.sleepDisabled == 1, controller.baseline == nil {
@@ -59,6 +70,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// What the settings say for the current power source.
     private func desiredActive() -> Bool {
         settings.targetFor(powerSource: lastKnownPowerSource) ?? false
+    }
+
+    private func offerHelperInstall() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Install the NeverSleep helper?"
+        alert.informativeText = "NeverSleep can install a tiny privileged helper (it runs as root and only ever flips the sleep setting). This is the last password you will ever type for NeverSleep — after it, toggling, quitting and restoring never ask again.\n\nIf you decline, NeverSleep keeps asking for the password on every toggle."
+        alert.addButton(withTitle: "Install Helper")
+        alert.addButton(withTitle: "Ask Each Time")
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     private func handleToggle(_ on: Bool) {

@@ -29,7 +29,7 @@ Explicitly out of contract (was never NoSleep behavior): forcing the display off
 
 ## Approach (NeverSleep)
 
-- **Mechanism:** toggle `pmset ... disablesleep` through a **privileged helper** (SMJobBless-style, or an authorized `SMAppService` flow). Never leaves the machine altered after the app exits.
+- **Mechanism:** toggle `pmset ... disablesleep` through a **privileged helper** — since v0.3.0, a root LaunchDaemon installed once by the app (see "Privileged helper" below; the ad-hoc-signed build deliberately skips the fussy SMJobBless/SMAppService.daemon registration APIs). Never leaves the machine altered after the app exits.
 - **Semantics that matter:**
   - Night-night verbs: `-b` targets the battery charger view, `-a` all charger views. The exact mix is an implementation decision; the *contract* is only that toggles power-source-scoped behavior like NoSleep's separate checkboxes did.
   - Sleep suppression applies on the current power source only when the matching NoSleep-style toggle is on — behavior at the moment the lid closes, not a permanent system setting.
@@ -51,6 +51,24 @@ Explicitly out of contract (was never NoSleep behavior): forcing the display off
 - `pmset` writes need root: each write goes through one `osascript … with administrator privileges` dialog; reads are unprivileged. Every write is verified by reading `pmset -g` back.
 - No CI. Verification expectations: behavior claims come from a real Mac run (admin auth included); from elsewhere, only compile checks count.
 - icon responsibilities: `art/neversleep-app-icon.svg` → `.icns` via `iconutil` on the Mac (SVG → PNG intermediate at 16/32/64/128/256/512/1024 px), `art/menubar-z*.svg` → in-app template-recolorable PDFs. Conversion happens Mac-side, not in this repo's CI (there is none).
+
+## Privileged helper (v0.3.0+)
+
+One admin password, ever. The first privileged write (first toggle, when no helper is installed) offers the install; accepting runs one osascript prompt that copies the helper out of the app bundle and bootstraps a LaunchDaemon. After that, **every** privileged operation — toggles, quit-restore, `neversleepctl` — is prompt-free.
+
+- **Binary:** `Sources/neversleep-helper` (SPM target), shipped in the bundle as `Contents/Resources/neversleep-helper`, installed to `/Library/PrivilegedHelperTools/app.legba.neversleep.helper` (`root:wheel` 0755 — root must never execute anything user-writable, hence the copy out of the app bundle).
+- **LaunchDaemon:** `/Library/LaunchDaemons/app.legba.neversleep.helper.plist` (`root:wheel` 0644), `RunAtLoad` + `KeepAlive`, program args `--socket /var/run/app.legba.neversleep.helper.sock --allow-uid <installing uid>`.
+- **IPC:** line protocol over the local unix socket, one request per connection: `PING` → `OK neversleep-helper/<version>`; `SET <scope> <value>` (scope `-b`/`-a`, value `0`/`1` — anything else is `ERR protocol`) → `OK` / `ERR exit=<n>` / `ERR verify`. The daemon runs `/usr/bin/pmset` with that fixed argv (no shell), verifies by reading `pmset -g` back (same ground truth as the app), and answers `OK` only on verified writes.
+- **Access model:** socket is 0666, but the daemon checks the peer UID (`getpeereid`) against `--allow-uid` and denies everyone else (denials logged). Any local process running as the installing user can ask the helper to flip sleep suppression — that is the power the installing user already has via one password prompt; nothing beyond it is exposed.
+- **Failure handling:** daemon absent/wedged → client socket timeouts (3 s); the app attempts one reinstall mid-session, else falls back to the v1 per-write osascript prompts. Protocol version mismatch = treated as not installed (reinstall path). Helper log: `/Library/Logs/NeverSleepHelper.log` (1 MB rolling cap).
+- **Manual uninstall:**
+  ```sh
+  sudo launchctl bootout system/app.legba.neversleep.helper
+  sudo rm -f /Library/LaunchDaemons/app.legba.neversleep.helper.plist \
+             /Library/PrivilegedHelperTools/app.legba.neversleep.helper \
+             /var/run/app.legba.neversleep.helper.sock
+  ```
+  Reinstall happens automatically on the next toggle (one prompt).
 
 ## Naming-collision note
 
