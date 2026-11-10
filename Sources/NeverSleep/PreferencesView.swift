@@ -11,6 +11,7 @@ struct PreferencesView: View {
             Toggle("Never sleep on Battery", isOn: $settings.suppressOnBattery)
             Divider()
             Toggle("Use black and white menu bar icons", isOn: $settings.useBlackWhiteIcons)
+            Toggle("Launch NeverSleep at login", isOn: $settings.launchAtLogin)
             Divider()
             Text("A Mac awake with a closed lid has reduced cooling — use it while you are using the machine, not in a backpack.").font(.footnote).foregroundColor(.secondary)
         }

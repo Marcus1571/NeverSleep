@@ -78,6 +78,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let prefs = NSMenuItem(title: "Preferences…", action: #selector(openPreferences(_:)), keyEquivalent: ",")
         prefs.target = self
         menu.addItem(prefs)
+        // Live truth each rebuild, so an external change in System Settings matches too.
+        let login = NSMenuItem(title: "Launch at login", action: #selector(toggleLogin(_:)), keyEquivalent: "")
+        login.state = LoginItem.isEnabled() ? .on : .off
+        login.target = self
+        menu.addItem(login)
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit NeverSleep", action: #selector(quitApp(_:)), keyEquivalent: "q")
         quit.target = self
@@ -87,6 +92,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func didToggle(_ sender: NSMenuItem) {
         onToggle(!active)
+    }
+    @objc private func toggleLogin(_ sender: NSMenuItem) {
+        let on = !(sender.state == .on)
+        settings.launchAtLogin = on   // routes through SettingsStore: service call + persisted default
+        sender.state = on ? .on : .off
+        if LoginItem.isEnabled() != on {
+            let alert = NSAlert()
+            alert.messageText = "NeverSleep"
+            alert.informativeText = "Could not \(on ? "register" : "unregister") the login item — see the NeverSleep log."
+            alert.runModal()
+        }
     }
     @objc private func openPreferences(_ sender: NSMenuItem) { onOpenPrefs() }
     @objc private func quitApp(_ sender: NSMenuItem) { onQuit() }

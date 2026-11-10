@@ -1,4 +1,5 @@
 import Foundation
+import ServiceManagement
 
 /// User-facing settings, mirroring the NoSleep pane (parity contract in KB.md).
 /// Persistence: UserDefaults is durable across app restarts; sleep-state
@@ -16,7 +17,7 @@ public final class SettingsStore: ObservableObject {
         didSet { defaults.set(useBlackWhiteIcons, forKey: Keys.useBlackWhiteIcons) }
     }
     @Published public var launchAtLogin: Bool {
-        didSet { LoginItem.set(enabled: launchAtLogin) }
+        didSet { defaults.set(launchAtLogin, forKey: Keys.launchAtLogin); LoginItem.set(enabled: launchAtLogin) }
     }
 
     private let defaults = UserDefaults.standard
@@ -32,6 +33,14 @@ public final class SettingsStore: ObservableObject {
         suppressOnBattery = defaults.object(forKey: Keys.suppressOnBattery) as? Bool ?? false
         useBlackWhiteIcons = defaults.object(forKey: Keys.useBlackWhiteIcons) as? Bool ?? true
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
+        // Adopt the live truth when it drifted from the stored default (e.g. the
+        // login item was turned off in System Settings, or on before this ran).
+        // Never auto-registers on launch: first-order divergence from "off" to
+        // "on" happens only through an explicit user action.
+        if LoginItem.isEnabled() != launchAtLogin {
+            launchAtLogin = LoginItem.isEnabled()
+            defaults.set(launchAtLogin, forKey: Keys.launchAtLogin)
+        }
     }
 
     /// Target for the power source we are on right now (NoSleep's
@@ -45,20 +54,31 @@ public final class SettingsStore: ObservableObject {
     }
 }
 
-/// Start-at-login via a LaunchAgent plist: works identically on macOS 11..26+,
-/// no framework calls, survives reboots. Replaced by SMAppService on v2 if
-/// it turns out to matter.
-enum LoginItem {
-    private static var plistURL: URL {
-        FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/LaunchAgents/app.legba.neversleep.plist")
+/// Start-at-login, dotbar's mechanism (KB parity item 7): `SMAppService.mainApp`
+/// registers the installed bundle as a login item — visible and reversible in
+/// System Settings › General › Login Items, survives app path moves. This is the
+/// live source of truth; the LaunchAgent plist below stays only as the fallback
+/// for macOS 11–12, where ServiceManagement's modern API does not exist.
+/// SMAppService itself is macOS 13+.
+public enum LoginItem {
+    public static func isEnabled() -> Bool {
+        if #available(macOS 13.0, *) {
+            return SMAppService.mainApp.status == .enabled
+        }
+        return FileManager.default.fileExists(atPath: plistURL.path)
     }
 
-    static func isEnabled() -> Bool {
-        FileManager.default.fileExists(atPath: plistURL.path)
-    }
-
-    static func set(enabled: Bool) {
+    public static func set(enabled: Bool) {
+        if #available(macOS 13.0, *) {
+            let s = SMAppService.mainApp
+            do {
+                try enabled ? s.register() : s.unregister()
+                Log.info("login item \(enabled ? "registered" : "unregistered") via SMAppService (status \(s.status.rawValue))")
+            } catch {
+                Log.error("login item SMAppService \(enabled ? "register" : "unregister") failed: \(error)")
+            }
+            return
+        }
         let url = plistURL
         if !enabled {
             if FileManager.default.fileExists(atPath: url.path) {
@@ -87,5 +107,10 @@ enum LoginItem {
         } catch {
             Log.error("login item install failed: \(error)")
         }
+    }
+
+    private static var plistURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/LaunchAgents/app.legba.neversleep.plist")
     }
 }
