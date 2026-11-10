@@ -2,6 +2,16 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.2.0] — 2026-11-10: launch at login (parity feature 7)
+
+Version bump: minor (real new feature; pre-1.0, same scale per `USER.md`). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.1.1 → 0.2.0.
+
+**Behavior change (new feature)**
+- `Sources/NeverSleepCore/SettingsStore.swift` — `LoginItem` migrated from a bare `~/Library/LaunchAgents/` plist to `SMAppService.mainApp` (macOS 13+), dotbar's mechanism: the registered bundle shows up under System Settings › General › Login Items and is reversible there; this service status — not the stored default — is the live source of truth. The LaunchAgent plist path stays only as the fallback for macOS 11–12, where ServiceManagement's modern API does not exist. Errors from register/unregister are logged and an alert is shown from the menu path. Before: off-parity stopgap, invisible in System Settings.
+- `SettingsStore.launchAtLogin` now also writes itself back to UserDefaults (before: the toggle was transient — it vanished on restart) and adopts the live service status at launch when the two have drifted (e.g. the login item was disabled in System Settings). No auto-registration at launch: changing off→on requires an explicit user action.
+- `Sources/NeverSleep/StatusBarController.swift` — menu gains a "Launch at login" checkmark item (NoSleep-parity #7, done dotbar-style: state is read fresh from the service on every rebuild). Before: the only way to set it was nothing — the setting existed in code but had no UI.
+- `Sources/NeverSleep/PreferencesView.swift` — Preferences gains a matching "Launch NeverSleep at login" toggle, wired through the same `SettingsStore.launchAtLogin` didSet.
+
 ## [0.1.1] — 2026-11-09: first real compile + install on the Mac
 
 Version bump: patch (pre-1.0, so important fixes go one level down per `USER.md`). 0.1.0 was never tagged; it never compiled. Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.1.0 → 0.1.1.

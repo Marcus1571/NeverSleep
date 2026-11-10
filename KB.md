@@ -14,7 +14,7 @@ Reproduced from NoSleep v1.5.x source and changelog (research trail in `findings
 | 4 | Use black and white menu bar icons | Preference: monochrome vs. accent-colored icons |
 | 5 | Use double click to activate | Double-click on the icon toggles like the single-click path |
 | 6 | Require password on display opening | **Dropped** (decision, 2026-11-09): no auto-lock at all — closing the lid turns the display off natively and the session stays unlocked; users lock by hand (`Control-Command-Q`) when they want to |
-| 7 | Start NoSleep utility on system startup | Login item (modern SMAppService instead of the old helper) |
+| 7 | Start NoSleep utility on system startup | Login item (**implemented 0.2.0**): `SMAppService.mainApp`, macOS 13+ (LaunchAgent plist fallback on 11–12); menu checkmark + Preferences toggle |
 | 8 | Automatically check for updates | Sparkle or osx-updater equivalent — decide at implementation |
 | 9 | Command-line interface | `neversleepctl` (state on/off/status), so scripts can flip it like `NoSleepCtrl` could |
 | 10 | State survives reboot | NoSleep persisted via NVRAM from the kext; NeverSleep persists in defaults and re-arms at launch — but *only while the app runs* (see "Never leaves the Mac awake", below) |

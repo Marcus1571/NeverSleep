@@ -13,6 +13,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.1.1 released** (first tagged release) — v0.1 **compiles and is installed** on the operator's Mac (2026-11-09): `swift build -c release` clean, `Scripts/make-bundle.sh` produces an ad-hoc-signed arm64 `.app`, copied to `/Applications` and launched (log shows baseline captured, AC power detected). Compile fixes + three runtime bug fixes in `findings.md` entry 8. **Partly smoke-tested 2026-11-09 (log-verified):** toggle on → one admin prompt → `SleepDisabled=1` verified (`-b` scope accepted on Apple Silicon, macOS 27); quit → baseline restored to 0 with a single prompt. **Still to test:** actually closing the lid while suppressed. Known gap: the per-source preference toggles only drive the icon state on power-source change; they do not apply pmset by themselves yet.
 
+**v0.2.0 released** (2026-11-10): launch-at-login via `SMAppService.mainApp` (dotbar's mechanism; parity feature 7), checkmark menu item + Preferences toggle, setting finally persists across restarts. Registered bundle is visible/reversible in System Settings › General › Login Items. Built and reinstalled to `/Applications` same day.
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
@@ -20,8 +22,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 3. Quit = restore: app delegates `applicationWillTerminate` + explicit toggle-off on sign-out to never leave the Mac awake after the app exits.
 4. Battery/AC separate toggles + live power-source detection (read out of IOPS).
 5. ~~auto-lock~~ dropped (operator decision — closed lid must never lock the session).
-6. Preferences polish (launch item, B/W vs colored icons).
-7. Preferences surface mirroring the NoSleep pane (startup item, etc.), parity check against the feature contract in `KB.md` before calling anything complete.
+6. ~~Preferences polish (launch item, B/W vs colored icons)~~ — B/W icons shipped in v0.1; **launch item shipped in v0.2.0** (2026-11-10): `SMAppService.mainApp`, menu checkmark + Preferences toggle.
+7. Preferences surface mirroring the NoSleep pane (startup item in place; remaining: parity check against the feature contract in `KB.md` before calling anything complete).
 8. Packaging + signed release discipline before publicizing the repo anywhere.
 
 ## Open questions / blocked
