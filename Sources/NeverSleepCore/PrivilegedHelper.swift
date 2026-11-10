@@ -11,7 +11,11 @@ public enum PrivilegedHelper {
     public static let label = "app.legba.neversleep.helper"
     public static let daemonBinaryPath = "/Library/PrivilegedHelperTools/app.legba.neversleep.helper"
     public static var launchdPlistPath: String { "/Library/LaunchDaemons/\(label).plist" }
-    public static let protocolVersion = 1
+    public static let protocolVersion = 2
+    // v2 (2026-11-10): fixed the daemon's SleepDisabled verification (tab vs
+    // space in pmset output — writes of 1 were "verified" false). The bump
+    // makes every running v1 daemon fail the handshake on next use, so the
+    // app offers the reinstall instead of talking to the broken verifier.
 
     public enum CommandError: Error, Equatable {
         case notInstalled          // no daemon answering on the socket

@@ -22,8 +22,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <plist version="1.0"><dict>
   <key>CFBundleName</key><string>NeverSleep</string>
   <key>CFBundleIdentifier</key><string>app.legba.neversleep</string>
-  <key>CFBundleVersion</key><string>0.3.1</string>
-  <key>CFBundleShortVersionString</key><string>0.3.1</string>
+  <key>CFBundleVersion</key><string>0.3.2</string>
+  <key>CFBundleShortVersionString</key><string>0.3.2</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>NeverSleep</string>
   <key>CFBundleIconFile</key><string>NeverSleep</string>

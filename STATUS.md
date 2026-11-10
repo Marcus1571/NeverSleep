@@ -19,6 +19,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.3.0 released** (2026-11-10): privileged root helper (`neversleep-helper` LaunchDaemon, installed once via a single admin prompt) — toggles, quit-restore and `neversleepctl` are password-free from then on; per-write osascript prompts remain as fallback when declined. Daemon protocol + security model in `KB.md` "Privileged helper". **0.3.1 hotfix same day:** the install script's `bootout && bootstrap` chain skipped the bootstrap on first install (bootout exits non-zero when not loaded), so 0.3.0 installs never started the daemon — fixed, one reinstall prompt required for 0.3.0-era installs.
 
+**v0.3.2 hotfix same day:** the daemon's verification looked for `"SleepDisabled 1"` (space) but `pmset -g` separates with tabs — writes of 1 took effect yet were reported `ERR verify`, so every activation showed "pmset rejected" while the Mac actually went quiet. Tolerant parser + `parsed=` field in the daemon log + protocol v2 (old daemons fail handshake → reinstall offered on next toggle).
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.

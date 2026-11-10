@@ -2,6 +2,14 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.3.2] — 2026-11-10: fix the daemon's read-back verification (tab vs space)
+
+Version bump: patch (fix of 0.3.0–0.3.1 daemon behavior). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.3.1 → 0.3.2.
+
+**Bug fix (behavior change: writes of `1` verify correctly now)**
+- `Sources/neversleep-helper/main.swift` — the daemon verified writes by looking for the literal `"SleepDisabled 1"` in `pmset -g` output, but real output separates label and value with **tabs** (`SleepDisabled\t\t1`, confirmed macOS 27). Every write of `1` therefore exited 0, actually took effect, yet was answered `ERR verify` — the app showed "pmset rejected disablesleep=1 in all scopes" while the machine *was* suppressed (a lie in the dangerous direction). Writes of `0` passed for the inverse wrong reason. The daemon now parses the value tolerantly (case-insensitive label, whitespace/`=` skipped, absent = 0) and logs the parsed value with every request. Before: user-visible failure on every activation, with real state diverging from what the app believed.
+- `Sources/NeverSleepCore/PrivilegedHelper.swift` — protocol version 1 → 2: a running v1 daemon (every 0.3.0/0.3.1 install) now fails the handshake, so the next toggle offers the reinstall instead of silently talking to the broken verifier.
+
 ## [0.3.1] — 2026-11-10: fix helper install losing the launchd bootstrap
 
 Version bump: patch (fix of 0.3.0's install path, no behavior beyond that). Bundle version (`Scripts/make-bundle.sh` Info.plist) 0.3.0 → 0.3.1.

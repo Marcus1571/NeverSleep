@@ -16,7 +16,7 @@ import Darwin
 //     scope: -b or -a; value: 0 or 1 (anything else is a protocol error)
 //   anything else       -> ERR protocol
 
-let helperVersion = 1
+let helperVersion = 2
 let logPath = "/Library/Logs/NeverSleepHelper.log"
 let pmsetPath = "/usr/bin/pmset"
 let maxRequestBytes = 256
@@ -58,11 +58,32 @@ func parseArgs() -> Config? {
     return Config(socketPath: sp, allowUID: uid)
 }
 
+/// Parses `pmset -g` output for the SleepDisabled value. The label is
+/// separated from the value by whitespace (tabs in the wild) — v0.3.1 and
+/// earlier matched a literal "SleepDisabled 1" with a space and mis-verified
+/// every write of 1 (the write worked; the daemon disbelieved it). Absent
+/// label means 0 (verified macOS 27). Returns nil only when the output is
+/// unrecognizable.
+func sleepDisabledValue(in output: String) -> Int? {
+    guard let range = output.range(of: "sleepdisabled", options: .caseInsensitive) else {
+        return nil   // absent = 0
+    }
+    var rest = output[range.upperBound...]
+    while let first = rest.first, first == "=" || first.isWhitespace {
+        rest = rest.dropFirst()
+    }
+    guard let first = rest.first, first.isNumber, let value = first.wholeNumberValue, (0...9).contains(value) else {
+        return nil
+    }
+    return value
+}
+
 /// Runs /usr/bin/pmset with fixed argv (no shell, no interpolation beyond the
 /// validated scope/value tokens) and verifies the effect by reading `pmset -g`
 /// back — same ground truth the app itself uses.
 func performSet(_ scope: String, _ value: String, uid: uid_t) -> String {
     let t0 = Date()
+    guard let target = Int(value) else { return "ERR protocol" }
     func run(_ arguments: [String]) -> (Int32, String) {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: pmsetPath)
@@ -80,6 +101,7 @@ func performSet(_ scope: String, _ value: String, uid: uid_t) -> String {
 
     let (exit, err) = run([scope, "disablesleep", value])
     var verified = false
+    var parsed: Int?
     if exit == 0 {
         let (vExit, vOut) = { () -> (Int32, String) in
             let v = Process()
@@ -93,13 +115,11 @@ func performSet(_ scope: String, _ value: String, uid: uid_t) -> String {
             v.waitUntilExit()
             return (v.terminationStatus, String(decoding: data, as: UTF8.self))
         }()
-        if vExit == 0 {
-            // SleepDisabled appears only when non-zero (verified macOS 27).
-            verified = value == "1" ? vOut.contains("SleepDisabled 1") : !vOut.contains("SleepDisabled 1")
-        }
+        parsed = vExit == 0 ? sleepDisabledValue(in: vOut) : nil
+        verified = parsed == target
     }
     let ms = Int(Date().timeIntervalSince(t0) * 1000)
-    log("SET \(scope) disablesleep \(value) uid=\(uid) exit=\(exit) verified=\(verified) took=\(ms)ms stderr=\(err)")
+    log("SET \(scope) disablesleep \(value) uid=\(uid) exit=\(exit) verified=\(verified) parsed=\(parsed.map(String.init) ?? "unrecognized") took=\(ms)ms stderr=\(err)")
     if exit != 0 { return "ERR exit=\(exit)" }
     if !verified { return "ERR verify" }
     return "OK"
