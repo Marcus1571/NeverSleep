@@ -31,6 +31,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.5.0 released** (2026-11-11): lid-close display blanking — the "minus the screen" half of the contract. Operator report: with suppression on and the lid closed, macOS 27 never blanked the panel. NeverSleep now blanks it via the display-sleep path (`pmset displaysleepnow`, unprivileged) when the lid closes with no external display attached, and wakes it on lid open (`caffeinate -u`); external display attached = clamshell working mode, displays never touched. Detection: IOPMrootDomain `AppleClamshellState` + AppleDisplayConnectionManager `DCPEXT` role (both verified live — see `findings.md` §13 for why `AppleSmartBattery` and `CGDisplayIsBuiltin` were distrusted on this build). Poll tightened 5 s → 1 s so lid-open wake feels instant. `neversleepctl status` gained lid + external-display lines. Operator's own E2E confirmed the core feature before this: suppression survived, mradio-web kept playing to BT headphones throughout.
 
+**v0.6.0 released** (2026-11-11): "About NeverSleep" menu item (first in the menu, macOS convention) opening a mini About page — app icon, version, © 2026 Marcus1571, the MIT/GPL-2.0 license split, and a clickable GitHub repo link. Verified live via AX click + window capture (recipe from `findings.md` §10).
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.

@@ -2,6 +2,14 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.6.0] — 2026-11-11: About NeverSleep mini page
+
+Version bump: minor (real new feature). Bundle version (`Scripts/make-app.sh`) 0.5.0 → 0.6.0 (build 500 → 600).
+
+**Behavior change (new feature)**
+- `Sources/NeverSleep/AboutView.swift` (new) + `Sources/NeverSleep/AppDelegate.swift` + `Sources/NeverSleep/StatusBarController.swift` — "About NeverSleep" as the first menu item (macOS convention), opening a small About window (single reused instance, titlebar-hidden "mini page"): app icon, name, "Version X (build Y)", "© 2026 Marcus1571" (the operator's public identity), the license line — **MIT (code) · GPL-2.0 (derived menu-bar art)**, kept separate per the art provenance rules — and a clickable link to `github.com/Marcus1571/NeverSleep`. Initial keyboard focus cleared on open so the link is not focus-ringed on first show. Verified live: AX-clicked the menu item and captured the rendered window.
+- `KB.md` housekeeping in the same change: poll interval wording 5 s → 1 s (stale since 0.5.0); "SwiftUI only for the Preferences window" → Preferences **and** About windows.
+
 ## [0.5.0] — 2026-11-11: lid-close display blanking (the "minus the screen" half of the contract)
 
 Version bump: minor (real new feature). Bundle version (`Scripts/make-app.sh`) 0.4.2 → 0.5.0 (build 402 → 500).
