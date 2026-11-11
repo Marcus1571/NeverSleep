@@ -37,6 +37,32 @@ public final class SleepController {
     private(set) var prefersBatteryScopedKey = true
     public private(set) var baseline: Baseline?
 
+    // MARK: Ownership marker
+    //
+    // `pmset disablesleep` outlives this process: it survives crashes,
+    // force-quits and full reboots. A SleepDisabled=1 found at startup is
+    // therefore ambiguous — either a leftover THIS app set before dying
+    // uncleanly, or a deliberately external config (e.g. a machine kept
+    // permanently awake by hand). The marker records "the currently-active
+    // suppression was set by NeverSleep" so startup can tell the two apart:
+    // own leftover → adopt it (toggle keeps working); no marker → stay
+    // read-only (never touch a setting we did not write). Shared suite so
+    // the app and neversleepctl (which has no bundle id) agree on it.
+    public enum SuppressionOwnership {
+        private static let defaults = UserDefaults(suiteName: "app.legba.neversleep")
+        private static let key = "ownsActiveSuppression"
+
+        public static var isActiveSuppressionOurs: Bool {
+            defaults?.bool(forKey: key) ?? false
+        }
+
+        static func setActiveSuppressionOurs(_ ours: Bool) {
+            guard let defaults else { return }
+            defaults.set(ours, forKey: key)
+            Log.info("ownership marker set to \(ours)")
+        }
+    }
+
     public init(admin: AdminPrivileges = .shared) {
         self.admin = admin
     }
@@ -55,12 +81,31 @@ public final class SleepController {
         return state
     }
 
+    /// Quiet state check for the polling loop (runs every few seconds — no
+    /// per-call logging). True only when SleepDisabled is verifiably 1.
+    public func isSleepSuppressed() -> Bool {
+        let (code, out, _) = ShellRunner.run(pmsetPath, arguments: ["-g"])
+        guard code == 0 else { return false }
+        return PowerState.parse(out).sleepDisabled == 1
+    }
+
     // MARK: Baseline
 
     public func captureBaseline() {
         let state = readState()
         baseline = state.map { Baseline(sleepDisabled: $0.sleepDisabled) }
         Log.info("baseline captured: \(String(describing: baseline))")
+    }
+
+    /// Startup path for a leftover of our own (SleepDisabled=1 + ownership
+    /// marker): the pre-app state was normal because WE wrote the 1, so the
+    /// baseline becomes 0 — the app adopts the live suppression (icon on,
+    /// toggle works) and quit still restores normal sleep. Never captures
+    /// the leftover as a baseline: that made the app lock itself read-only
+    /// forever after an unclean death (v0.4.0 bug).
+    public func adoptLeftoverSuppression() {
+        baseline = Baseline(sleepDisabled: 0)
+        Log.info("adopted own leftover suppression (ownership marker present); baseline forced to 0")
     }
 
     public func restoreBaseline() {
@@ -75,7 +120,9 @@ public final class SleepController {
             return
         }
         Log.info("restoring baseline SleepDisabled=\(target)")
-        _ = writeDisablesleep(target)
+        if writeDisablesleep(target) != nil && target == 0 {
+            SuppressionOwnership.setActiveSuppressionOurs(false)
+        }
     }
 
     // MARK: Motate
@@ -84,6 +131,10 @@ public final class SleepController {
         let target = suppress ? 1 : 0
         if let current = readState()?.sleepDisabled, current == target {
             let scope = prefersBatteryScopedKey ? "battery-scoped (-b)" : "system-wide (-a)"
+            if !suppress {
+                // Reading a verified 0 makes any ownership claim stale.
+                SuppressionOwnership.setActiveSuppressionOurs(false)
+            }
             return suppress ? .alreadyEnabled(scope: scope) : .alreadyDisabled
         }
         guard let (_, scope) = writeDisablesleep(target) else {
@@ -91,6 +142,7 @@ public final class SleepController {
         }
         if let verified = readState()?.sleepDisabled, verified == target {
             Log.info("verified disablesleep=\(target) via \(scope)")
+            SuppressionOwnership.setActiveSuppressionOurs(suppress)
             return suppress ? .enabled(scope: scope) : .disabled(scope: scope)
         }
         return .failed(reason: "pmset exited 0 but verification read did not match (target=\(target))")

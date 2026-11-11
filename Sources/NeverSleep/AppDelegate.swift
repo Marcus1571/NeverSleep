@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var prefsWindow: NSWindow?
     private var menuUpdater: AnyCancellable?
     private var lastKnownPowerSource: PowerSource = .unknown
+    private var lastKnownActive = false
     // Sparkle: nil for bare-binary launches (Sparkle can only update a bundled app).
     private var updaterController: SPUStandardUpdaterController?
 
@@ -30,22 +31,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         Log.info("privileged helper: \(PrivilegedHelper.handshake() ?? "not installed (will be offered on first toggle)")")
-        // Safety gate: if the machine is already permanently awake (e.g. a
-        // deliberate SleepDisabled 1 config), do not touch anything — warn only.
-        if let state = controller.readState(), state.sleepDisabled == 1, controller.baseline == nil {
-            controller.captureBaseline()
-            if controller.baseline?.sleepDisabled == 1 {
-                Log.info("machine already permanently suppressed; staying read-only")
-                statusBar = StatusBarController(settings: settings,
-                                                onToggle: { [weak self] on in self?.handleToggle(on) },
-                                                onOpenPrefs: { [weak self] in self?.openPreferences() },
-                                                onQuit: { [weak self] in self?.quitClean() },
-                                                updater: nil,
-                                                externallySuppressed: true)
-                return
+        // Startup state reconciliation. SleepDisabled=1 outlives this process
+        // (survives crashes and reboots), so it is ambiguous: with the
+        // ownership marker it is OUR leftover from an unclean death — adopt
+        // it and keep the toggle live (baseline forced to 0, so quit still
+        // restores). Without the marker it is a deliberate external config —
+        // stay read-only, warn only, never touch it. (v0.4.0 captured its
+        // own leftover as a baseline here, which locked the app read-only
+        // forever and could never clear itself.)
+        var externallySuppressed = false
+        if controller.readState()?.sleepDisabled == 1 {
+            if SleepController.SuppressionOwnership.isActiveSuppressionOurs {
+                controller.adoptLeftoverSuppression()
+            } else {
+                controller.captureBaseline()
+                if controller.baseline?.sleepDisabled == 1 {
+                    externallySuppressed = true
+                    Log.info("machine suppressed from outside NeverSleep; staying read-only")
+                }
             }
+        } else {
+            controller.captureBaseline()
         }
-        controller.captureBaseline()
         // Sparkle scheduler comes from Info.plist (check at startup, weekly
         // interval); only when running from a bundle — bare `swift run` has
         // nothing to update. NeverSleep installs a root helper: a Sparkle
@@ -62,7 +69,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                         onOpenPrefs: { [weak self] in self?.openPreferences() },
                                         onQuit: { [weak self] in self?.quitClean() },
                                         updater: updaterController,
-                                        externallySuppressed: false)
+                                        externallySuppressed: externallySuppressed)
+        // The poll runs in every mode: the read-only path previously skipped
+        // it, which froze the menu on "Power source: Unknown" (v0.4.0 bug).
         pollPowerSource(initial: true)
         schedulePowerSourcePolling()
     }
@@ -77,15 +86,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func pollPowerSource(initial: Bool) {
         let source = PowerSourceReader.current()
-        guard source != lastKnownPowerSource || initial else { return }
-        Log.info("power source: \(source.rawValue) (was \(lastKnownPowerSource.rawValue))")
+        // The icon reflects the LIVE pmset state, not the preference: a
+        // manual toggle or an external pmset change must show up here, and
+        // the previous preference-based value could contradict the machine
+        // (icon off while sleep was actually disabled).
+        let liveActive = controller.isSleepSuppressed()
+        guard source != lastKnownPowerSource || liveActive != lastKnownActive || initial else { return }
+        Log.info("state: power=\(source.rawValue) suppressed=\(liveActive) (was power=\(lastKnownPowerSource.rawValue) suppressed=\(lastKnownActive))")
         lastKnownPowerSource = source
-        statusBar.update(powerSource: source, active: desiredActive())
-    }
-
-    /// What the settings say for the current power source.
-    private func desiredActive() -> Bool {
-        settings.targetFor(powerSource: lastKnownPowerSource) ?? false
+        lastKnownActive = liveActive
+        statusBar.update(powerSource: source, active: liveActive)
     }
 
     private func offerHelperInstall() -> Bool {
@@ -100,7 +110,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func handleToggle(_ on: Bool) {
         let source = lastKnownPowerSource
         Log.info("user toggle: on=\(on) source=\(source.rawValue)")
-        guard settings.targetFor(powerSource: source) != nil || on else {
+        // Turning suppression OFF is always legitimate — restoring normal
+        // sleep must never be blocked by a missing per-source preference
+        // (the power source can read Unknown; v0.4.0 ignored the click in
+        // exactly that case). Only enabling needs an explicit setting.
+        guard on || settings.targetFor(powerSource: source) != nil else {
             Log.info("toggle ignored: no suppression configured for \(source.rawValue)")
             return
         }
@@ -112,7 +126,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             alert.informativeText = reason
             alert.runModal()
         }
-        statusBar.refresh(active: on)
+        // Reflect what the machine actually does now, not what was asked.
+        statusBar.refresh(active: controller.isSleepSuppressed())
     }
 
     private func openPreferences() {

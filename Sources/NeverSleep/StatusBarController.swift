@@ -28,6 +28,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         self.externallySuppressed = externallySuppressed
         super.init()
         let menu = NSMenu()
+        // Items manage their own enabled state explicitly (isEnabled below).
+        // With the default autoenablesItems=true AppKit re-enables items that
+        // have a target but no validateMenuItem implementation — which made
+        // the read-only mode's "disabled" toggle clickable (v0.4.0 bug).
+        menu.autoenablesItems = false
         menu.delegate = self
         statusItem.menu = menu
         renderIcon(active: false)
@@ -48,12 +53,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func renderIcon(active: Bool) {
+        // Effective suppression: a leftover adopted at startup (active) and
+        // an externally-configured machine (externallySuppressed) both mean
+        // the Mac will not sleep — the icon must say so. (v0.4.0 rendered
+        // the inactive outline icon while the machine was actually
+        // suppressed in external mode.)
+        let effective = active || externallySuppressed
         // NoSleep parity #3 (imitating the original app): filled Zz glyph while
         // suppression is active, outline Zz glyph while normal sleep — the exact
         // pair the original swapped on state change (ZzActive/ZzInactive, both
         // template). We ship both derived glyphs as vector PDFs; the SF-Symbol
         // "zzz" stays as the fallback for a bare `swift run` (no bundle).
-        let glyph = active ? "menubar-z-active" : "menubar-z-inactive"
+        let glyph = effective ? "menubar-z-active" : "menubar-z-inactive"
         var img: NSImage
         if let url = Bundle.main.url(forResource: glyph, withExtension: "pdf"),
            let bundled = NSImage(contentsOf: url) {
@@ -65,7 +76,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             // Template rendering gives the B/W menu-bar behavior on light+dark
             // for free (alpha decides the shape; menu-tint does the coloring).
             img.isTemplate = true
-        } else if active {
+        } else if effective {
             let tinted: NSImage = img.tinted(with: NSColor(red: 0.31, green: 0.79, blue: 0.91, alpha: 1.0))
             img = tinted
         } else {
@@ -73,7 +84,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             img = tinted
         }
         statusItem.button?.image = img
-        statusItem.button?.toolTip = active
+        statusItem.button?.toolTip = effective
             ? "NeverSleep: awake with lid closed (\(powerSource.rawValue))"
             : "NeverSleep: normal sleep"
     }
@@ -82,7 +93,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let menu = statusItem.menu ?? NSMenu()
         menu.removeAllItems()
         let effective = active || externallySuppressed
-        let toggleTitle = effective ? "Restore normal sleep" : "Keep awake with lid closed"
+        // In external mode the toggle is genuinely disabled (autoenablesItems
+        // is off, so isEnabled is honored) and named for what is actually
+        // going on — a "Restore normal sleep" button that does nothing is
+        // exactly how v0.4.0 got stuck-looking.
+        let toggleTitle = externallySuppressed
+            ? "Sleep suppressed outside NeverSleep"
+            : (effective ? "Restore normal sleep" : "Keep awake with lid closed")
         let item = NSMenuItem(title: toggleTitle, action: #selector(didToggle(_:)), keyEquivalent: "")
         item.target = self
         item.isEnabled = !externallySuppressed
