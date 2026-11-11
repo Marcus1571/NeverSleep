@@ -6,6 +6,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let settings: SettingsStore
     private var onToggle: (Bool) -> Void
+    private var onOpenAbout: () -> Void
     private var onOpenPrefs: () -> Void
     private var onQuit: () -> Void
     // Sparkle (bundled runs only): the menu item targets the updater directly.
@@ -16,12 +17,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     init(settings: SettingsStore,
          onToggle: @escaping (Bool) -> Void,
+         onOpenAbout: @escaping () -> Void,
          onOpenPrefs: @escaping () -> Void,
          onQuit: @escaping () -> Void,
          updater: SPUStandardUpdaterController?,
          externallySuppressed: Bool) {
         self.settings = settings
         self.onToggle = onToggle
+        self.onOpenAbout = onOpenAbout
         self.onOpenPrefs = onOpenPrefs
         self.onQuit = onQuit
         self.updater = updater
@@ -92,6 +95,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private func rebuildMenu() {
         let menu = statusItem.menu ?? NSMenu()
         menu.removeAllItems()
+        // About first — the conventional position in a macOS menu.
+        let about = NSMenuItem(title: "About NeverSleep", action: #selector(openAbout(_:)), keyEquivalent: "")
+        about.target = self
+        menu.addItem(about)
+        menu.addItem(.separator())
         let effective = active || externallySuppressed
         // In external mode the toggle is genuinely disabled (autoenablesItems
         // is off, so isEnabled is honored) and named for what is actually
@@ -145,6 +153,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             alert.runModal()
         }
     }
+    @objc private func openAbout(_ sender: NSMenuItem) { onOpenAbout() }
     @objc private func openPreferences(_ sender: NSMenuItem) { onOpenPrefs() }
     @objc private func quitApp(_ sender: NSMenuItem) { onQuit() }
 }

@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore.shared
     private var statusBar: StatusBarController!
     private var prefsWindow: NSWindow?
+    private var aboutWindow: NSWindow?
     private var menuUpdater: AnyCancellable?
     private var lastKnownPowerSource: PowerSource = .unknown
     private var lastKnownActive = false
@@ -68,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         statusBar = StatusBarController(settings: settings,
                                         onToggle: { [weak self] on in self?.handleToggle(on) },
+                                        onOpenAbout: { [weak self] in self?.openAbout() },
                                         onOpenPrefs: { [weak self] in self?.openPreferences() },
                                         onQuit: { [weak self] in self?.quitClean() },
                                         updater: updaterController,
@@ -154,6 +156,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // Reflect what the machine actually does now, not what was asked.
         statusBar.refresh(active: controller.isSleepSuppressed())
+    }
+
+    /// The About mini page: app icon, version, the operator's public
+    /// identity, both licenses and the repo link (see AboutView). Reused
+    /// single window, same pattern as openPreferences.
+    private func openAbout() {
+        if aboutWindow == nil {
+            let hosting = NSHostingController(rootView: AboutView())
+            let window = NSWindow(contentViewController: hosting)
+            window.title = "About NeverSleep"
+            window.styleMask = [.titled, .closable]
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.setContentSize(hosting.view.fittingSize)
+            window.center()
+            aboutWindow = window
+        }
+        aboutWindow?.makeKeyAndOrderFront(nil)
+        aboutWindow?.makeFirstResponder(nil)   // don't leave the repo link focus-ringed on open
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func openPreferences() {
