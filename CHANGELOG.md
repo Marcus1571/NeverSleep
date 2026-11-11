@@ -2,6 +2,26 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.4.1] — 2026-11-11: recover from NeverSleep's own leftover suppression after an unclean death
+
+Version bump: patch (five bug fixes, no new capability). Bundle version (`Scripts/make-app.sh`) 0.4.0 → 0.4.1 (build 40100).
+
+**Incident (2026-11-11):** the Mac rebooted at ~09:00 while suppression was active; the app died without its quit-restore and `SleepDisabled 1` survived the reboot. On relaunch the startup gate captured the leftover as a baseline and locked the app read-only ("machine already permanently suppressed"), which — through the bugs below — left the menu stuck: "Restore normal sleep" did nothing, the icon stayed on the filled state, "Power source: Unknown". The machine stayed suppressed with no working way back from the app (cleared manually via `neversleepctl restore`).
+
+**Bug fix (behavior change: own leftovers are adopted, not captured)**
+- `Sources/NeverSleepCore/SleepController.swift` — new ownership marker (shared UserDefaults suite `app.legba.neversleep`, key `ownsActiveSuppression`): set whenever a verified suppression write goes out (app or `neversleepctl`), cleared on verified restore. `SleepDisabled 1` outlives the process, so at startup it is ambiguous — with the marker it is OUR leftover → new `adoptLeftoverSuppression()` adopts it (baseline forced to 0, toggle stays live, quit still restores); without the marker it is a deliberate external config → read-only gate as before. Before: an unclean death permanently wedged the app into read-only mode on its own leftover, and quit-restore no-oped (`already at baseline SleepDisabled=1`) so the state could never clear itself.
+- `Sources/neversleepctl/main.swift` unchanged — `suppress`/`restore` route through `SleepController`, so the marker is kept correct from the CLI too.
+
+**Bug fix (menu items' disabled state is honored now)**
+- `Sources/NeverSleep/StatusBarController.swift` — `menu.autoenablesItems = false`. With AppKit's default `true`, items that have a target but no `validateMenuItem` implementation are re-enabled regardless of `isEnabled = false` — the read-only mode's "disabled" toggle was clickable, and in that mode the click sent the wrong direction (title showed effective state, action sent `!active` → toggle **on** → "Already suppressed"). Items now enable/disable exactly as set; in external mode the item reads "Sleep suppressed outside NeverSleep" and is genuinely inert.
+
+**Bug fix (restore is never blocked)**
+- `Sources/NeverSleep/AppDelegate.swift` `handleToggle` — the guard now only requires a per-source preference for enabling (`on || targetFor != nil`); turning suppression off proceeds regardless. Before: with the power source reading Unknown (no preference possible), the off-toggle was ignored ("toggle ignored: no suppression configured for Unknown").
+
+**Bug fix (icon + power read live in every mode)**
+- `Sources/NeverSleep/AppDelegate.swift` — the 5 s poll runs in all modes (the read-only path previously returned before polling, freezing "Power source: Unknown" forever), and its `active` now reflects the **live pmset state** (`SleepController.isSleepSuppressed()`, a quiet read — no per-call logging) instead of the preference value, which could contradict the machine after a manual toggle. `handleToggle` likewise refreshes from the verified state. The read-only path also creates the status bar with polling and Sparkle intact.
+- `Sources/NeverSleepCore/SleepController.swift` — new `isSleepSuppressed()` (logging-free state read for the polling loop; `readState()` still logs, for diagnostic paths).
+
 ## [0.4.0] — 2026-11-10: Developer ID distribution + Sparkle self-updating (parity feature 8)
 
 Version bump: minor (major new capability: real distribution + self-updates; pre-1.0, same scale per `USER.md`). Bundle version now follows the latest CHANGELOG heading automatically (`scripts/make-app.sh`), CFBundleVersion is the numeric stamp (0.4.0 → 40000) that Sparkle compares.

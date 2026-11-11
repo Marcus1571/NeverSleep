@@ -79,3 +79,19 @@ How the `docs/img/` set was captured live (mirrors diskled-plus findings "README
 - **Menu shot:** `screencapture -x -R1640,29,245,180` while the menu is open.
 - **Preferences window:** AX-click the "Preferences…" menu item, then `tell application "NeverSleep" to activate` — the window opens BEHIND the frontmost app otherwise (a first capture attempt grabbed unrelated window content and was deleted unused). Crop to the queried window position/size, close via the AXCloseButton.
 - **Menu-bar redraw lag (watch out):** right after a state toggle, the menu bar can still display the PREVIOUS icon state for several seconds on this macOS build — the app sets the image immediately (log + AX state confirm), the bar just redraws lazily. An "impossible" capture (outline while suppressed) was this lag, not a bug: re-capture after a pause, or verify against `pmset -g` + the app log before suspecting the renderer.
+
+## 11. The v0.4.1 incident: an unclean death wedged the app into a dead read-only mode (2026-11-11)
+
+**Reported by the operator:** "Restore normal sleep" has no effect and the icon is stuck on the filled state; menu showed "Power source: Unknown".
+
+**Root cause chain (all verified against `~/Library/Logs/NeverSleep.log` and live `pmset`):**
+1. Suppression was toggled on at 00:14; the Mac rebooted at ~09:00 (verified `last reboot`: shutdown 09:00, boot 09:54) — the app never got its quit-restore, and `SleepDisabled 1` **survived the reboot** (pmset writes are durable — treat that as a standing fact).
+2. On relaunch the startup gate found `SleepDisabled=1`, captured it as baseline (1), and locked the app read-only ("machine already permanently suppressed") — misclassifying NeverSleep's **own leftover** as a deliberate external config (the macai case). Quit-restore then no-oped (`already at baseline SleepDisabled=1`), so the state could never clear itself.
+3. The read-only path `return`ed before power polling → "Power source: Unknown" forever.
+4. `item.isEnabled = false` is **not honored** by AppKit when `NSMenu.autoenablesItems` is its default `true` and the target has no `validateMenuItem` — the "disabled" toggle was clickable (log proves the clicks fired).
+5. In read-only mode the click sent the wrong direction: title used effective state (`active || externallySuppressed`) but the action sent `!active` → toggle **on** → "Already suppressed".
+6. Even had the direction been right, `handleToggle`'s guard (`targetFor(source) != nil || on`) blocked toggling **off** when the power source was Unknown (no preference can exist for it).
+
+**Fix (v0.4.1):** ownership marker (shared defaults suite `app.legba.neversleep`, key `ownsActiveSuppression`; set on verified enable, cleared on verified disable — kept correct from `neversleepctl` too since both go through `SleepController`); startup adopts marked leftovers (baseline 0, toggle live) and keeps the read-only gate only for marker-less external state; `autoenablesItems = false`; off-toggle never guarded; poll runs everywhere and reflects live state via a quiet `isSleepSuppressed()` read.
+
+**Verdict / standing facts:** (a) `disablesleep` persists across reboots — every future session must expect leftovers after crashes/forced shutdowns, and the marker is what makes them recoverable; (b) `NSMenu.autoenablesItems` silently overrides per-item `isEnabled` — any future "disabled menu item" in this project needs the auto-enable off or a `validateMenuItem`; (c) E2E-verified live on this Mac: adopt path (marker + 1 → adopted, poll shows `power=AC Power suppressed=true`), external path (1 without marker → read-only, now with working power read), and restore via `neversleepctl restore` (password-free through the protocol-v2 helper).
