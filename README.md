@@ -2,7 +2,7 @@
 
 *Successor to [NoSleep](https://github.com/integralpro/nosleep) — close the lid, keep working.*
 
-NeverSleep is a lean macOS menu-bar app that keeps a MacBook **fully awake with the lid closed**. Close the lid and keep talking on Teams / Zoom, keep a download running, keep a render going — the machine behaves exactly as if the lid were open, minus the display being on (the display turns itself off on its own; NeverSleep does not force it).
+NeverSleep is a lean macOS menu-bar app that keeps a MacBook **fully awake with the lid closed**. Close the lid and keep talking on Teams / Zoom, keep a download running, keep a render going — the machine behaves exactly as if the lid were open, minus the display being on (NeverSleep blanks the panel through the display-sleep path — apps, audio and network never notice; with an external screen attached it stays out of the way entirely).
 
 NoSleep solved this with a kernel extension, which modern macOS (SIP + user-approved kext loading) made unmaintainable; it was deprecated in ~2019. NeverSleep ships the same user-facing feature contract on the modern mechanism instead: a runtime toggle of the OS's own sleep-disable behavior ([KB.md — Approach](KB.md#approach)), applied only while NeverSleep runs and restored when it quits.
 

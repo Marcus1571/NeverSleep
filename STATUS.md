@@ -29,6 +29,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.4.2 released** (2026-11-11, hotfix same day): v0.4.1's ownership marker was a UserDefaults suite — which turned out **not to be shared** between the bundled app and the bare `neversleepctl` (a suite named like the app's own bundle id resolves differently in the two process kinds; the ctl's marker write was invisible to the app). Marker moved to a fixed file, `~/Library/Application Support/NeverSleep/owns-suppression`. E2E re-verified live: ctl suppress → relaunch adopts → graceful quit restores 0 and removes the marker; marker-less suppression still gates read-only. Detail in `CHANGELOG.md` 0.4.2 and `findings.md` §12.
 
+**v0.5.0 released** (2026-11-11): lid-close display blanking — the "minus the screen" half of the contract. Operator report: with suppression on and the lid closed, macOS 27 never blanked the panel. NeverSleep now blanks it via the display-sleep path (`pmset displaysleepnow`, unprivileged) when the lid closes with no external display attached, and wakes it on lid open (`caffeinate -u`); external display attached = clamshell working mode, displays never touched. Detection: IOPMrootDomain `AppleClamshellState` + AppleDisplayConnectionManager `DCPEXT` role (both verified live — see `findings.md` §13 for why `AppleSmartBattery` and `CGDisplayIsBuiltin` were distrusted on this build). Poll tightened 5 s → 1 s so lid-open wake feels instant. `neversleepctl status` gained lid + external-display lines. Operator's own E2E confirmed the core feature before this: suppression survived, mradio-web kept playing to BT headphones throughout.
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.

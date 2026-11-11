@@ -2,6 +2,15 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.5.0] — 2026-11-11: lid-close display blanking (the "minus the screen" half of the contract)
+
+Version bump: minor (real new feature). Bundle version (`Scripts/make-app.sh`) 0.4.2 → 0.5.0 (build 402 → 500).
+
+**Behavior change (new feature)**
+- `Sources/NeverSleepCore/DisplayControl.swift` (new) + `Sources/NeverSleepCore/PowerSourceMonitor.swift` + `Sources/NeverSleep/AppDelegate.swift` — with suppression active and **no external display attached**, a closed lid now blanks the panel (`pmset displaysleepnow`, unprivileged — verified exit 0 as console user) and an opened lid wakes it (`caffeinate -u -t 2`). Rationale (operator report, 2026-11-11): with `disablesleep` on, macOS 27 does NOT turn the display off on lid close — the "exactly like an open lid, minus the screen" half of the contract silently didn't hold. Display sleep is the display-idle path: apps, audio (BT headphones unaffected), network keep running untouched; no sleep, no logout, no session lock. Detection is IOKit registry reads in the 1 s poll (tightened from 5 s so lid-open wake feels instant): lid = IOPMrootDomain `AppleClamshellState` (verified live; AppleSmartBattery has no clamshell keys on macOS 27 — findings §13), external = AppleDisplayConnectionManager `ConnectionMapping` `role = DCPEXT` (verified live with a DELL P3424WEB attached; `CGDisplayIsBuiltin` distrusted after inconsistent reporting). Hard rule: external attached → displays never touched (clamshell working mode). Unknown lid (desktops) → never blank.
+- `Sources/neversleepctl/main.swift` — `status` now also prints lid state and external-display presence (operator debugging).
+- Poll interval 5 s → 1 s (`AppDelegate.schedulePowerSourcePolling`).
+
 ## [0.4.2] — 2026-11-11: ownership marker on a fixed file (v0.4.1's marker never crossed processes)
 
 Version bump: patch (fix of 0.4.1's marker storage). Bundle version (`Scripts/make-app.sh`) 0.4.1 → 0.4.2 (build 401 → 402).
