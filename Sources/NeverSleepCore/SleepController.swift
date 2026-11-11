@@ -46,20 +46,34 @@ public final class SleepController {
     // permanently awake by hand). The marker records "the currently-active
     // suppression was set by NeverSleep" so startup can tell the two apart:
     // own leftover → adopt it (toggle keeps working); no marker → stay
-    // read-only (never touch a setting we did not write). Shared suite so
-    // the app and neversleepctl (which has no bundle id) agree on it.
+    // read-only (never touch a setting we did not write).
+    //
+    // Storage: a fixed file, not UserDefaults. The bundled app and the bare
+    // neversleepctl resolve defaults domains differently — a suite name
+    // equal to the app's bundle id reads a different store in the bundled
+    // process than in the bare one (found live in v0.4.1: the ctl wrote the
+    // marker, the app never saw it). Both processes resolve $HOME
+    // identically, so one fixed file is the shared channel. The abandoned
+    // `ownsActiveSuppression` defaults key from v0.4.1 stays unread cruft.
     public enum SuppressionOwnership {
-        private static let defaults = UserDefaults(suiteName: "app.legba.neversleep")
-        private static let key = "ownsActiveSuppression"
+        static let markerURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/NeverSleep/owns-suppression")
 
         public static var isActiveSuppressionOurs: Bool {
-            defaults?.bool(forKey: key) ?? false
+            FileManager.default.fileExists(atPath: markerURL.path)
         }
 
         static func setActiveSuppressionOurs(_ ours: Bool) {
-            guard let defaults else { return }
-            defaults.set(ours, forKey: key)
-            Log.info("ownership marker set to \(ours)")
+            if ours {
+                try? FileManager.default.createDirectory(
+                    at: markerURL.deletingLastPathComponent(),
+                    withIntermediateDirectories: true)
+                FileManager.default.createFile(atPath: markerURL.path, contents: Data("1\n".utf8))
+                Log.info("ownership marker created (\(markerURL.path))")
+            } else {
+                try? FileManager.default.removeItem(at: markerURL)
+                Log.info("ownership marker removed")
+            }
         }
     }
 
