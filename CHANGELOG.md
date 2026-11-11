@@ -2,14 +2,23 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.4.2] — 2026-11-11: ownership marker on a fixed file (v0.4.1's marker never crossed processes)
+
+Version bump: patch (fix of 0.4.1's marker storage). Bundle version (`Scripts/make-app.sh`) 0.4.1 → 0.4.2 (build 401 → 402).
+
+**Bug fix (behavior change: the leftover-adopted path actually triggers now)**
+- `Sources/NeverSleepCore/SleepController.swift` — the ownership marker moved from a UserDefaults suite to a fixed file (`~/Library/Application Support/NeverSleep/owns-suppression`). v0.4.1 shipped the marker as a shared defaults suite (`app.legba.neversleep`), which is **not actually shared**: the bare `neversleepctl`'s suite write lands in `~/Library/Preferences/app.legba.neversleep.plist` and is invisible to the bundled app's suite read of the same name (verified live: in the bundled process, suite read = false while standard read and a raw plist read of the same file = true — a suite named like the app's own bundle id resolves differently between bundled and bare processes). Net effect: the 0.4.1 adopt-own-leftover feature never fired for leftovers created via the ctl, and adoption for app-created leftovers was luck. Both processes resolve `$HOME` identically, so one fixed file is the shared channel. The abandoned `ownsActiveSuppression` defaults key stays as unread cruft in the plist. Verified E2E live after the change: ctl suppress → relaunch adopts (baseline forced 0) → graceful quit restores 0 and removes the marker; suppression without a marker still gates read-only.
+
 ## [0.4.1] — 2026-11-11: recover from NeverSleep's own leftover suppression after an unclean death
 
-Version bump: patch (five bug fixes, no new capability). Bundle version (`Scripts/make-app.sh`) 0.4.0 → 0.4.1 (build 40100).
+Version bump: patch (five bug fixes, no new capability). Bundle version (`Scripts/make-app.sh`) 0.4.0 → 0.4.1 (build 400 → 401).
+
+**Post-release correction:** the ownership marker in this release used a UserDefaults suite, which turned out not to be shared between the bundled app and the bare ctl (adoption never triggered from a ctl-created leftover) — fixed in 0.4.2. Everything else below is unaffected.
 
 **Incident (2026-11-11):** the Mac rebooted at ~09:00 while suppression was active; the app died without its quit-restore and `SleepDisabled 1` survived the reboot. On relaunch the startup gate captured the leftover as a baseline and locked the app read-only ("machine already permanently suppressed"), which — through the bugs below — left the menu stuck: "Restore normal sleep" did nothing, the icon stayed on the filled state, "Power source: Unknown". The machine stayed suppressed with no working way back from the app (cleared manually via `neversleepctl restore`).
 
 **Bug fix (behavior change: own leftovers are adopted, not captured)**
-- `Sources/NeverSleepCore/SleepController.swift` — new ownership marker (shared UserDefaults suite `app.legba.neversleep`, key `ownsActiveSuppression`): set whenever a verified suppression write goes out (app or `neversleepctl`), cleared on verified restore. `SleepDisabled 1` outlives the process, so at startup it is ambiguous — with the marker it is OUR leftover → new `adoptLeftoverSuppression()` adopts it (baseline forced to 0, toggle stays live, quit still restores); without the marker it is a deliberate external config → read-only gate as before. Before: an unclean death permanently wedged the app into read-only mode on its own leftover, and quit-restore no-oped (`already at baseline SleepDisabled=1`) so the state could never clear itself.
+- `Sources/NeverSleepCore/SleepController.swift` — new ownership marker (shared UserDefaults suite `app.legba.neversleep`, key `ownsActiveSuppression` — see the 0.4.2 correction above): set whenever a verified suppression write goes out (app or `neversleepctl`), cleared on verified restore. `SleepDisabled 1` outlives the process, so at startup it is ambiguous — with the marker it is OUR leftover → new `adoptLeftoverSuppression()` adopts it (baseline forced to 0, toggle stays live, quit still restores); without the marker it is a deliberate external config → read-only gate as before. Before: an unclean death permanently wedged the app into read-only mode on its own leftover, and quit-restore no-oped (`already at baseline SleepDisabled=1`) so the state could never clear itself.
 - `Sources/neversleepctl/main.swift` unchanged — `suppress`/`restore` route through `SleepController`, so the marker is kept correct from the CLI too.
 
 **Bug fix (menu items' disabled state is honored now)**
