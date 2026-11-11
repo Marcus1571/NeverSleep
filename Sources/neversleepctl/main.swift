@@ -16,6 +16,9 @@ case "status":
     if let state = controller.readState() {
         print("SleepDisabled: \(state.sleepDisabled.map(String.init) ?? "unknown")")
         print("power source : \(PowerSourceReader.current().rawValue)")
+        let lid = LidState.isClosed()
+        print("lid          : \(lid.map { $0 ? "closed" : "open" } ?? "unknown")")
+        print("external disp: \(DisplayControl.externalDisplayAttached() ? "attached" : "none")")
     } else {
         print("pmset -g unreadable")
         exit(1)

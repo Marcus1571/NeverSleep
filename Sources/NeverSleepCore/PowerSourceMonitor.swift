@@ -1,4 +1,5 @@
 import Foundation
+import IOKit
 
 /// Which power source is active, read from `pmset -g batt` (works across all
 /// targeted macOS versions, no IOKit header wrangling, identical on Intel/ARM).
@@ -18,12 +19,24 @@ public enum PowerSourceReader {
     }
 }
 
-/// Lid state via the IORegistry "AppleClamshellState" property on
-/// "AppleSmartBattery". Public IORegistry read; same path on Intel and Apple
-/// Silicon. Returns nil when the build cannot read it (e.g. desktops) — the
-/// caller treats nil as "unknown", never as "closed".
-enum LidState {
-    static func isClosed() -> Bool? {
-        nil // replaced by IOKit read once it compiles on-device (see STATUS open item)
+/// Lid state via IOPMrootDomain's "AppleClamshellState" property. Verified
+/// live on macOS 27 / M3 (2026-11-11): AppleSmartBattery carries NO clamshell
+/// keys on this build; IOPMrootDomain's AppleClamshellState tracks the lid
+/// live (Yes observed with the lid closed, AppleClamshellCausesSleep=No while
+/// disablesleep is set). Public IORegistry read; same path on Intel and
+/// Apple Silicon. Returns nil when the machine has no lid signal (desktops) —
+/// the caller treats nil as "unknown", never as "closed".
+public enum LidState {
+    public static func isClosed() -> Bool? {
+        let domain = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPMrootDomain"))
+        guard domain != 0 else { return nil }
+        defer { IOObjectRelease(domain) }
+        guard let raw = IORegistryEntrySearchCFProperty(
+            domain, kIOServicePlane,
+            "AppleClamshellState" as CFString,
+            kCFAllocatorDefault,
+            IOOptionBits(kIORegistryIterateRecursively))
+        else { return nil }
+        return raw as? Bool
     }
 }

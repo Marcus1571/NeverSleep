@@ -12,6 +12,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuUpdater: AnyCancellable?
     private var lastKnownPowerSource: PowerSource = .unknown
     private var lastKnownActive = false
+    private var lastKnownLidClosed: Bool? = nil
+    private var blankedThisClosure = false
     // Sparkle: nil for bare-binary launches (Sparkle can only update a bundled app).
     private var updaterController: SPUStandardUpdaterController?
 
@@ -77,8 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func schedulePowerSourcePolling() {
-        // 5s poll — simple and version-agnostic; richer IOKit notifications land in v0.2.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+        // 1 s poll — display wake on lid open must feel instant; pmset spawns
+        // and IORegistry reads this fast are negligible. Richer IOKit
+        // notifications remain a possible refinement (see STATUS open item).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             self?.pollPowerSource(initial: false)
             self?.schedulePowerSourcePolling()
         }
@@ -91,6 +95,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the previous preference-based value could contradict the machine
         // (icon off while sleep was actually disabled).
         let liveActive = controller.isSleepSuppressed()
+        // Lid-close display handling (v0.5.0): with suppression active and
+        // no external display attached, a closed lid blanks the panel via
+        // the display-sleep path (apps/audio/network untouched). Not gated
+        // on the lid transition alone: this also covers enabling suppression
+        // while the lid is already closed, and unplugging the external
+        // screen mid-closure. An attached external display = clamshell
+        // working mode — displays are never touched. Unknown lid → never
+        // blank (desktops, unreadable registry).
+        let lidClosed = LidState.isClosed()
+        if lidClosed != lastKnownLidClosed {
+            Log.info("lid: \(lidClosed.map { $0 ? "closed" : "open" } ?? "unknown") (was \(lastKnownLidClosed.map { $0 ? "closed" : "open" } ?? "unknown"))")
+            lastKnownLidClosed = lidClosed
+        }
+        if liveActive, lidClosed == true, !blankedThisClosure,
+           !DisplayControl.externalDisplayAttached() {
+            blankedThisClosure = true
+            DisplayControl.sleepNow()
+        }
+        if lidClosed == false, blankedThisClosure {
+            blankedThisClosure = false
+            DisplayControl.wake()
+        }
         guard source != lastKnownPowerSource || liveActive != lastKnownActive || initial else { return }
         Log.info("state: power=\(source.rawValue) suppressed=\(liveActive) (was power=\(lastKnownPowerSource.rawValue) suppressed=\(lastKnownActive))")
         lastKnownPowerSource = source
