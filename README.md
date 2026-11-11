@@ -20,7 +20,7 @@ The menu-bar icon tells you the state instantly, imitating the original NoSleep'
 |--------------|----------------------|
 | <img src="docs/img/icon-normal-sleep.png" width="40" alt="menu bar icon: outline Zz, normal sleep"> | <img src="docs/img/icon-awake.png" width="40" alt="menu bar icon: filled Zz, awake-when-closed active"> |
 
-Clicking it opens the menu (toggle, live power source, Check for Updates, Preferences, Launch at login):
+Clicking it opens the menu (About, toggle, live power source, Check for Updates, Preferences, Launch at login):
 
 | Menu | Preferences |
 |------|-------------|
@@ -36,9 +36,13 @@ Read [STATUS.md](STATUS.md) for where development stands, and [findings.md](find
 
 ⚠️ A Mac awake with a closed lid has reduced cooling. NeverSleep is for use *while you are using the machine*, not for closed-lid tasks in a backpack all day.
 
-## Compiling agent instructions (precise)
+## Install
 
-Run these on a Mac with Swift installed. Nothing else: no Xcode IDE session, no tool additions.
+Download `NeverSleep-<version>.dmg` from [GitHub Releases](https://github.com/Marcus1571/NeverSleep/releases/latest) — it is Developer ID–signed and notarized by Apple, so Gatekeeper opens it silently. Drag **NeverSleep** to **/Applications** and launch it. The app updates itself (Sparkle checks at startup and weekly and installs automatically, or force one via **Check for Updates… ⌘U**), and **Launch at login** in the menu is all the setup there is. One password, ever: the first toggle offers to install the privileged helper, and after that toggling, restoring and quitting never prompt again ([KB.md — Privileged helper](KB.md#privileged-helper-v030)).
+
+## Build from source
+
+Only needed for hacking on NeverSleep — the DMG from Releases above is the normal path. Run these on a Mac with Swift installed. Nothing else: no Xcode IDE session, no tool additions.
 
 ```bash
 # 1. Prereq (once): command-line Swift. macOS 11+ host is enough.
