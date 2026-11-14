@@ -37,6 +37,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.7.1 released** (2026-11-14, hotfix same day): About-page caption wrapped via `fixedSize(horizontal: false, vertical: true)` — the live capture of 0.7.0 showed the caption truncated to one line ("…or tap t…"). Full release sequence rerun (tag v0.7.1, GitHub Release, appcast 0.7.1, installed, About window re-captured: caption wraps to two lines).
 
+**v0.8.0 released** (2026-11-14): "Report a Bug" ported from diskled-plus — menu item (ladybug SF Symbol, last before Quit) + About-page section, both opening `github.com/Marcus1571/NeverSleep/issues`; PayPal link and QR payload lowercased to `paypal.me/marcodalmoro` (QR regenerated, self-verified). E2E live: quit→restore 0→relaunch→re-arm 1 clean; AX menu dump + About capture verify both surfaces (`screenshots/about-bug-report-0.8.0-verify.png`).
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
