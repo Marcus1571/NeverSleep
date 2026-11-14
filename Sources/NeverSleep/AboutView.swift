@@ -33,6 +33,16 @@ struct AboutView: View {
             Link("github.com/Marcus1571/NeverSleep",
                  destination: URL(string: "https://github.com/Marcus1571/NeverSleep")!)
                 .font(.subheadline)
+            // Bug-report block, same design as diskled-plus 0.10.0: ladybug +
+            // "Report a Bug" + a tappable link to the repo's Issues page.
+            HStack(spacing: 5) {
+                Image(systemName: "ladybug.fill")
+                Text("Report a Bug")
+                    .font(.subheadline).fontWeight(.semibold)
+            }
+            Link("github.com/Marcus1571/NeverSleep/issues",
+                 destination: URL(string: "https://github.com/Marcus1571/NeverSleep/issues")!)
+                .font(.caption)
             Text("Successor to NoSleep — keeps the Mac awake with the lid closed.")
                 .font(.footnote).foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -56,8 +66,8 @@ struct AboutView: View {
             }
             Text("Support NeverSleep")
                 .font(.subheadline).fontWeight(.semibold)
-            Link("paypal.me/MarcoDalmoro",
-                 destination: URL(string: "https://paypal.me/MarcoDalmoro")!)
+            Link("paypal.me/marcodalmoro",
+                 destination: URL(string: "https://paypal.me/marcodalmoro")!)
                 .font(.caption)
             Text("Point your phone's camera at the code — or tap the link.")
                 .font(.caption2).foregroundColor(.secondary)

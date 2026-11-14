@@ -133,6 +133,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         login.target = self
         menu.addItem(login)
         menu.addItem(.separator())
+        // Report a Bug: SF Symbol ladybug (template — macOS tints it with the
+        // row color), opens the repo's Issues page. Same placement as
+        // diskled-plus: last before Quit.
+        let bug = NSMenuItem(title: "Report a Bug…",
+                             action: #selector(reportBug(_:)),
+                             keyEquivalent: "")
+        bug.target = self
+        bug.image = NSImage(systemSymbolName: "ladybug.fill", accessibilityDescription: "Report a Bug")?
+            .withSymbolConfiguration(.init(pointSize: 13, weight: .regular))
+        menu.addItem(bug)
         let quit = NSMenuItem(title: "Quit NeverSleep", action: #selector(quitApp(_:)), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
@@ -155,6 +165,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
     @objc private func openAbout(_ sender: NSMenuItem) { onOpenAbout() }
     @objc private func openPreferences(_ sender: NSMenuItem) { onOpenPrefs() }
+    /// Opens the repository's GitHub Issues page in the default browser.
+    @objc private func reportBug(_ sender: NSMenuItem) {
+        NSWorkspace.shared.open(URL(string: "https://github.com/Marcus1571/NeverSleep/issues")!)
+    }
     @objc private func quitApp(_ sender: NSMenuItem) { onQuit() }
 }
 

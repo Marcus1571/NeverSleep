@@ -4,7 +4,7 @@
 // or new dependencies (CoreImage is system-provided).
 //
 // Usage: swift Scripts/make-qr.swift [output.png] [url]
-// Defaults: assets/paypal-qr.png, https://paypal.me/MarcoDalmoro
+// Defaults: assets/paypal-qr.png, https://paypal.me/marcodalmoro
 //
 // Self-verifies: after writing, decodes the PNG back with CIDetector's QR
 // reader and fails loudly unless the payload round-trips exactly.
@@ -12,7 +12,7 @@
 import AppKit
 import CoreImage
 
-let payURL = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "https://paypal.me/MarcoDalmoro"
+let payURL = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "https://paypal.me/marcodalmoro"
 let outPath = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "assets/paypal-qr.png"
 let scale = 12        // px per QR module (crisp, nearest-neighbor)
 let quietModules = 4  // quiet zone around the code, in modules (spec suggests 4)
