@@ -2,6 +2,19 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.7.0] — 2026-11-14: PayPal donation on the About page + preference re-enforcement (the "was not active this morning" fix)
+
+Version bump: minor (real new feature + real bug fix). Bundle version (`Scripts/make-app.sh`) 0.6.0 → 0.7.0 (build 600 → 700).
+
+**Behavior change (new feature)**
+- `Sources/NeverSleep/AboutView.swift` + `assets/paypal-qr.png` (new) + `Scripts/make-app.sh` + `Scripts/make-qr.swift` (new) — the About page gains a donation block between the version line and the copyright: an 88×88 PayPal QR, "Support NeverSleep", a `paypal.me/MarcoDalmoro` link (phones can't scan their own screen), and a caption. Degrades to text-only when the PNG is absent (bare `swift run`). Licensing verdict in `findings.md` §14: GPL-2.0 art inheritance does not block a donation button (NoSleep itself shipped a `PayPalButton/`). The QR is deliberately a neutral locally-generated code, not PayPal's branded artwork: `Scripts/make-qr.swift` generates `assets/paypal-qr.png` with CoreImage and **self-verifies** by decoding its own output back (payload must round-trip exactly; regenerate only if the handle changes); `make-app.sh` copies it into `Contents/Resources`. Layout approved by the operator via a light/dark HTML mockup before implementation.
+
+**Bug fix (behavior change: the saved preference now governs continuously)**
+- `Sources/NeverSleep/AppDelegate.swift` + `Sources/NeverSleepCore/SettingsStore.swift` — operator report 2026-11-14: "this morning NeverSleep was not active". Log-verified from `~/Library/Logs/NeverSleep.log`: suppression was ON at the 18:27 clean shutdown; the app's quit-restore restored `SleepDisabled=0` by design; the 19:26 relaunch started **inactive** because the "re-arms at launch" half of KB feature 10 was designed but never implemented — `applicationDidFinishLaunching` only reconciled unclean-death leftovers. (Also: the relaunch was on battery, where the AC-only preference legitimately would not apply — so the re-arm must follow power-source changes, not just launch.) Fix: new `AppDelegate.enforcePreference()` drives the live pmset state toward the saved per-source preference for the current power source **at launch and on every power-source change** (inside the 1 s poll); skipped on an externally suppressed machine (read-only gate — not ours to touch); failures log without alerting (automatic actions never block on a dialog). The menu toggle now **syncs the saved per-source preference** (`SettingsStore.setTarget`) so the Preferences checkbox and the menu are one state (NoSleep semantics) — previously the menu toggle wrote pmset without touching the preference, so a manual ON was invisible to any re-arm. Documented edges in `KB.md`: a manual `neversleepctl` set survives only until the next power-source change or relaunch; Preferences-checkbox changes apply at the next launch or source change, not instantly.
+- `KB.md` — feature 10 marked implemented (0.7.0); "Semantics that matter" documents the enforcement rules.
+
+**Docs-only, same release window** — `findings.md` §14 licensing verdict (committed `e7c0917`).
+
 ## [0.6.0] — 2026-11-11: About NeverSleep mini page
 
 Version bump: minor (real new feature). Bundle version (`Scripts/make-app.sh`) 0.5.0 → 0.6.0 (build 500 → 600).

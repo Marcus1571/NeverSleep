@@ -2,8 +2,12 @@ import Foundation
 import ServiceManagement
 
 /// User-facing settings, mirroring the NoSleep pane (parity contract in KB.md).
-/// Persistence: UserDefaults is durable across app restarts; sleep-state
-/// restoration is behavioral (baseline at quit), not a persisted flag.
+/// Persistence: UserDefaults is durable across app restarts. The per-source
+/// suppression preference IS the persistent control state: it is re-enforced
+/// at launch and on every power-source change (AppDelegate.enforcePreference,
+/// KB feature 10 "re-arms at launch"), and the menu toggle keeps it in sync.
+/// Baseline capture/restore on quit still guarantees the machine returns to
+/// normal sleep whenever the app exits cleanly.
 public final class SettingsStore: ObservableObject {
     public static let shared = SettingsStore()
 
@@ -50,6 +54,17 @@ public final class SettingsStore: ObservableObject {
         case .ac: return suppressOnAC
         case .battery: return suppressOnBattery
         case .unknown: return nil
+        }
+    }
+
+    /// Writes the per-source target (used by the menu toggle so the saved
+    /// preference and the live control stay one state — NoSleep semantics).
+    /// Unknown source is skipped: the write cannot be attributed to a source.
+    public func setTarget(on: Bool, powerSource: PowerSource) {
+        switch powerSource {
+        case .ac: suppressOnAC = on
+        case .battery: suppressOnBattery = on
+        case .unknown: break
         }
     }
 }

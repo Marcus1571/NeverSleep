@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastKnownPowerSource: PowerSource = .unknown
     private var lastKnownActive = false
     private var lastKnownLidClosed: Bool? = nil
+    private var externallySuppressed = false
     private var blankedThisClosure = false
     // Sparkle: nil for bare-binary launches (Sparkle can only update a bundled app).
     private var updaterController: SPUStandardUpdaterController?
@@ -42,7 +43,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // stay read-only, warn only, never touch it. (v0.4.0 captured its
         // own leftover as a baseline here, which locked the app read-only
         // forever and could never clear itself.)
-        var externallySuppressed = false
         if controller.readState()?.sleepDisabled == 1 {
             if SleepController.SuppressionOwnership.isActiveSuppressionOurs {
                 controller.adoptLeftoverSuppression()
@@ -120,10 +120,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DisplayControl.wake()
         }
         guard source != lastKnownPowerSource || liveActive != lastKnownActive || initial else { return }
+        let sourceChanged = source != lastKnownPowerSource
         Log.info("state: power=\(source.rawValue) suppressed=\(liveActive) (was power=\(lastKnownPowerSource.rawValue) suppressed=\(lastKnownActive))")
         lastKnownPowerSource = source
         lastKnownActive = liveActive
         statusBar.update(powerSource: source, active: liveActive)
+        if sourceChanged {
+            // NoSleep parity (KB feature 10): the per-source preference governs
+            // continuously — a saved "never sleep on AC" is re-applied whenever
+            // the machine lands on AC, not only at launch. This is the fix for
+            // the 2026-11-14 morning report: a clean shutdown restores normal
+            // sleep by design, and nothing ever re-armed the saved preference.
+            enforcePreference()
+        }
+    }
+
+    /// Drives the live pmset state toward the saved per-source preference for
+    /// the current power source (NoSleep semantics: the checkbox IS the
+    /// control; the menu toggle keeps it in sync). Never runs on an
+    /// externally suppressed machine (read-only gate — that config is not
+    /// ours to touch). One-directional no-op when state already matches.
+    private func enforcePreference() {
+        guard !externallySuppressed else { return }
+        let source = lastKnownPowerSource
+        guard let target = settings.targetFor(powerSource: source),
+              controller.isSleepSuppressed() != target else { return }
+        Log.info("preference enforcement: applying saved \(source.rawValue) preference on=\(target)")
+        let outcome = controller.setSleepSuppressed(target)
+        Log.info("preference enforcement result: \(outcome.userMessage)")
+        if case .failed(let reason) = outcome {
+            Log.error("preference enforcement failed: \(reason)")   // log only — no alert on an automatic action
+        }
+        statusBar.refresh(active: controller.isSleepSuppressed())
     }
 
     private func offerHelperInstall() -> Bool {
@@ -146,6 +174,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Log.info("toggle ignored: no suppression configured for \(source.rawValue)")
             return
         }
+        // NoSleep semantics: the menu toggle IS the per-source control (the
+        // Preferences checkbox mirrors it). Keeping the saved preference in
+        // sync is what makes launch re-arm and power-source enforcement agree
+        // with what the user actually did — without this, the 2026-11-14
+        // morning report happens: suppression on at shutdown, gone at relaunch.
+        settings.setTarget(on: on, powerSource: source)
         let outcome = controller.setSleepSuppressed(on)
         Log.info("toggle result: \(outcome.userMessage)")
         if case .failed(let reason) = outcome {
