@@ -61,6 +61,7 @@ struct AboutView: View {
                 .font(.caption)
             Text("Point your phone's camera at the code — or tap the link.")
                 .font(.caption2).foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)   // must wrap, not truncate (0.7.1)
                 .multilineTextAlignment(.center)
         }
     }

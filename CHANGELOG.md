@@ -2,6 +2,15 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.7.1] — 2026-11-14: About-page caption wraps instead of truncating
+
+Version bump: patch (visual fix on 0.7.0's new About block). Bundle version (`Scripts/make-app.sh`) 0.7.0 → 0.7.1 (build 700 → 701).
+
+**Bug fix (no functional change)**
+- `Sources/NeverSleep/AboutView.swift` — the donation caption ("Point your phone's camera at the code — or tap the link.") rendered on one truncated line ("…or tap t…") in the live capture of the 0.7.0 About window, while every other text in the window wrapped normally. Fix: `fixedSize(horizontal: false, vertical: true)` on the caption — SwiftUI keeps it at its ideal single-line width when the proposal comes through the NSHostingController fitting-size pass; this forces wrapping at the window's content width. Verified in the re-captured live window (v0.7.1): caption wraps to two lines, centered.
+
+**Also this session:** a 0.7.0 notarization retry lesson — `Scripts/make-dmg.sh` invoked **without the identity argument** produced an ad-hoc-signed app and Apple's notary rejected it (status Invalid — Sparkle's Updater.app and the main binary "not signed with a valid Developer ID certificate"), while `notarytool submit --wait` still **exited 0 on the Invalid status**, letting the script sail into `stapler`, which failed with "Record not found" (Error 65). Root cause was the caller, not the script: rerun with `make-dmg.sh 0.7.0 "Developer ID"` and notarization + stapling succeeded first try. Worth remembering: on a `stapler "Record not found"`, check the notary log (`xcrun notarytool log <id>`) before touching anything — and always pass the identity explicitly.
+
 ## [0.7.0] — 2026-11-14: PayPal donation on the About page + preference re-enforcement (the "was not active this morning" fix)
 
 Version bump: minor (real new feature + real bug fix). Bundle version (`Scripts/make-app.sh`) 0.6.0 → 0.7.0 (build 600 → 700).
