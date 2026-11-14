@@ -125,3 +125,32 @@ Question raised: does NeverSleep's NoSleep-derived art (GPL-2.0) block publishin
 - One-way compatibility note: MIT → GPL is permitted; GPL → MIT is not. The art/code split must be preserved (never move art files under `Sources/`).
 
 Verdict: publishing NeverSleep and adding a PayPal donation button is fully compatible with the licensing state; keep the MIT-code / GPL-art split as documented. Practical guidance, not legal advice.
+
+## 15. DMG notarization does not register the inner .app's own notarization record (2026-11-14)
+
+Context: installing the 0.8.0 Developer ID build to /Applications directly
+from `.build/app/` (the same bundle `make-dmg.sh` notarizes inside the DMG).
+`spctl -a -vv` on the installed app said `source=Unnotarized Developer ID`,
+and `xcrun stapler staple /Applications/NeverSleep.app` failed with
+`CloudKit query ... failed due to "Record not found"` — Apple's assessment
+service had **no notarization record for the app's own cdhash**, even though
+the enclosing DMG had just been notarized + stapled successfully
+(`stapler validate` on the DMG passes).
+
+Findings:
+- Notarizing a DMG does not reliably create a per-app online record for the
+  app inside it; the staple lives on the DMG container. (diskled-plus's
+  installed app passes the online check with no staple — evidently Apple's
+  inner-item registration from DMG submissions is not guaranteed, so never
+  assume the installed copy is "notarized" just because its DMG was.)
+- Fix used for the local install: zip the app
+  (`ditto -c -k --keepParent NeverSleep.app NeverSleep-0.8.0.zip`), submit
+  the zip to `notarytool` directly (`status: Accepted`), then
+  `stapler staple` the app — after which spctl reports
+  `Notarized Developer ID`.
+- For distribution the DMG is still the shipped artifact and is properly
+  notarized + stapled, so Gatekeeper is satisfied for end users regardless.
+
+Verdict: whenever a freshly-installed local copy reports "Unnotarized
+Developer ID", submit the zipped .app itself and staple it — do not treat a
+notarized DMG as covering the bare app bundle.
