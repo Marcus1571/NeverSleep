@@ -113,3 +113,15 @@ Probed live while the operator worked in clamshell mode (DELL P3424WEB attached,
 - The built-in panel leaves the registry (`role=DCPINT` absent) while offline in clamshell — DCP roles appear only for online panels, so "external attached" is a live read, not a boot-time fact.
 - **Display sleep primitives, verified unprivileged as the console user:** `pmset displaysleepnow` exits 0 and sleeps the display; `caffeinate -u -t 2` exits 0 and wakes it. Neither needs root, neither touches the sleep state — apps/audio/network are unaffected (the operator's music kept playing during the probe).
 - **Never blank in clamshell-with-external:** that state is the operator's working mode — blanking there would kill the screen they are using. This is why the external check gates every blank decision.
+
+## 14. Licensing: GPL-2.0 inheritance vs. a PayPal donation button (2026-11-14)
+
+Question raised: does NeverSleep's NoSleep-derived art (GPL-2.0) block publishing the app with a PayPal donation button on the About page?
+
+- Original NoSleep repo (<https://github.com/integralpro/nosleep>) is GPL-2.0 and was itself donationware: it ships a `PayPalButton/` directory in its file listing — the GPL project we inherited from had exactly this button.
+- GPL-2.0 is not a non-commercial license. Its §1 states "You may charge a fee for the physical act of transferring a copy"; the FSF's stated position is that selling GPL software is fine. A voluntary donation button is strictly weaker than selling. No conflict with any GPL obligation.
+- Code-wise NeverSleep is not a derivative of NoSleep: nothing was copied; the implementation is from scratch (SwiftUI + privileged helper), and source comments reference NoSleep only as a *behavioral contract* (KB.md feature table). Copyright protects expression (code text), not ideas/features/mechanisms — feature parity carries no license obligation. The MIT `LICENSE` on the code therefore stands.
+- The only directly derived material is the Zz glyph art, already handled: `art/ART-LICENSE.md` declares those files GPL-2.0, separate from the MIT code; distribution obligations (keep art under GPL-2.0, source availability) are satisfied by the public repo.
+- One-way compatibility note: MIT → GPL is permitted; GPL → MIT is not. The art/code split must be preserved (never move art files under `Sources/`).
+
+Verdict: publishing NeverSleep and adding a PayPal donation button is fully compatible with the licensing state; keep the MIT-code / GPL-art split as documented. Practical guidance, not legal advice.
