@@ -2,6 +2,14 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.9.1] — 2026-11-15: double-click detection is timing-based (hotfix, same day)
+
+Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.9.0 → 0.9.1 (build 800 → 901).
+
+**Bug fix (0.9.0's double-click could never fire)**
+- `Sources/NeverSleep/StatusBarController.swift` — double-click activation now detects a pair **timing-based**: two actions within `NSEvent.doubleClickInterval` = a double (`lastIconClick` timestamp in the controller; a right-click/⌃-click menu open resets the pair). Why: `NSEvent.clickCount` is unreliable for status-item button actions — verified live with a CGEvent harness, **both mouseUps of a pair reported `cc=1`**, so 0.9.0's `clickCount >= 2` check could never pass. **E2E verified live on the operator's Mac (double-click mode on):** double-click toggled suppression 1 → 0 (log `user toggle: on=false`, `SleepDisabled 0`), single click = no-op (no toggle logged), right-click opened the menu reading the new OFF state (`○ Normal macOS sleep` / `Keep awake when lid closes — click to turn ON`). Defaults restored after the test (`doubleClickActivate` off, `suppressOnAC` on → relaunch re-armed suppression).
+- Test-lesson for the log: a first verification round silently tested a **ghost instance** — a previous app process survived an `osascript quit` (AppleEvent timeout) alongside the fresh one, each holding its own status item; `pgrep -x NeverSleep` showed 2. Always `pkill -x` and confirm a single instance before click-verifying anything menu-bar related.
+
 ## [0.9.0] — 2026-11-15: menu redesign + double-click activation (NoSleep parity #5)
 
 Version bump: minor (real new feature + UI redesign). Bundle version (`Scripts/make-app.sh`) 0.8.0 → 0.9.0 (build 800 → 900). Numbered 0.9.0 because 0.8.0 (Report a Bug) shipped earlier the same day from a concurrent session.

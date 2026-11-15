@@ -198,14 +198,27 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     /// convention) opens the menu so Preferences/Quit stay reachable.
     @objc private func statusItemClicked(_ sender: Any?) {
         guard settings.doubleClickActivate, let event = NSApp.currentEvent else { return }
-        let controlClick = event.modifierFlags.contains(.control)
-        if event.type == .rightMouseUp || (event.type == .leftMouseUp && controlClick) {
+        // Double-click detection is timing-based (two actions within the
+        // system double-click interval): NSEvent.clickCount is unreliable
+        // here — posted events and some status-item paths deliver cc=1 on
+        // both clicks of a pair.
+        let now = Date()
+        if event.type == .rightMouseUp || (event.type == .leftMouseUp && event.modifierFlags.contains(.control)) {
+            lastIconClick = nil   // a menu open breaks a click pair
             openMenuFromButton()
             return
         }
-        guard event.type == .leftMouseUp, event.clickCount >= 2 else { return }
-        onToggle(!active)
+        guard event.type == .leftMouseUp else { return }
+        let isDouble = lastIconClick.map { now.timeIntervalSince($0) < NSEvent.doubleClickInterval } ?? false
+        if isDouble {
+            lastIconClick = nil
+            onToggle(!active)
+        } else {
+            lastIconClick = now   // single click: no-op by design, timestamp remembered for the pair
+        }
     }
+
+    private var lastIconClick: Date?
 
     /// Programmatic menu open for the right-click path (the menu is detached
     /// in double-click mode, so AppKit's auto-open is unavailable).
