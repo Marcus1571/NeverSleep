@@ -2,6 +2,16 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.9.0] — 2026-11-15: menu redesign + double-click activation (NoSleep parity #5)
+
+Version bump: minor (real new feature + UI redesign). Bundle version (`Scripts/make-app.sh`) 0.8.0 → 0.9.0 (build 800 → 900). Numbered 0.9.0 because 0.8.0 (Report a Bug) shipped earlier the same day from a concurrent session.
+
+**Behavior change (new feature, UI redesign — approved via light/dark mockup of both states)**
+- `Sources/NeverSleep/StatusBarController.swift` — the menu is redesigned around the one function this app has: a color-coded **status header** at the top (`● Keeping the Mac awake` green, `○ Normal macOS sleep` gray, `● Sleep suppressed outside NeverSleep` orange in external mode) with a small subtitle line, then **the toggle as the loudest item** — bold title titled as the action with a hint suffix (`Restore normal sleep — click to turn OFF` / `Keep awake when lid closes — click to turn ON`), so a non-technical user reads one line and knows exactly what to click (the operator's cousin could not, in the old menu). About is demoted from the macOS-conventional first slot into the lower cluster — deliberate: the top belongs to the state + the toggle. All attributed `NSMenuItem` titles (bold/colored — native AppKit, no hacks).
+- **Double click (NoSleep parity #5, the NoSleep way — as a mode):** Preferences gains **"Use double click to activate"** (`SettingsStore.doubleClickActivate`, persisted). When ON, the menu **detaches** from the status item (a double-click's first press must not open the menu — that is why NoSleep shipped this as a mode too), a left double-click toggles directly via the button action's `clickCount`, and right-click/⌃-click opens the menu through `NSStatusItem.popUpMenu(_ menu: NSMenu)` (Preferences/Quit stay reachable). When OFF (default), nothing changes: AppKit auto-opens the menu on click as before. The toggle is live — flipping it in Preferences re-renders the menu (rebuild runs on the published change).
+- `Sources/NeverSleepCore/SettingsStore.swift` (+`doubleClickActivate`) and `Sources/NeverSleep/PreferencesView.swift` (toggle + conditional caption).
+- Compile lessons: `NSStatusItem.popUpMenu(_:)` takes an **`NSMenu`**, not a rect; AppKit's `NSFont` has no UIKit-style `.withWeight` (plain `boldSystemFont(ofSize:)` chosen); there is **no `+` operator for `NSAttributedString`** in this toolchain (small `joined(_:)` variadic builder added).
+
 ## [0.8.0] — 2026-11-14: Report a Bug (menu + About) and PayPal URL lowercased
 
 Version bump: minor (new menu item + About section). Bundle version 0.7.1 → 0.8.0 (build 701 → 800). Ported from diskled-plus 0.10.x, which introduced the same design the same day.

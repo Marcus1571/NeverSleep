@@ -11,6 +11,10 @@ struct PreferencesView: View {
             Toggle("Never sleep on Battery", isOn: $settings.suppressOnBattery)
             Divider()
             Toggle("Use black and white menu bar icons", isOn: $settings.useBlackWhiteIcons)
+            Toggle("Use double click to activate", isOn: $settings.doubleClickActivate)
+            if settings.doubleClickActivate {
+                Text("Single click on the menu-bar icon does nothing and a double-click toggles. Right-click (or ⌃-click) opens the menu.").font(.caption2).foregroundColor(.secondary)
+            }
             Toggle("Launch NeverSleep at login", isOn: $settings.launchAtLogin)
             Divider()
             Text("A Mac awake with a closed lid has reduced cooling — use it while you are using the machine, not in a backpack.").font(.footnote).foregroundColor(.secondary)

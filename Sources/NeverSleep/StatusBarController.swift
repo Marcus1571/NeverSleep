@@ -4,6 +4,7 @@ import NeverSleepCore
 
 final class StatusBarController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    private let menu = NSMenu()
     private let settings: SettingsStore
     private var onToggle: (Bool) -> Void
     private var onOpenAbout: () -> Void
@@ -30,14 +31,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         self.updater = updater
         self.externallySuppressed = externallySuppressed
         super.init()
-        let menu = NSMenu()
         // Items manage their own enabled state explicitly (isEnabled below).
         // With the default autoenablesItems=true AppKit re-enables items that
         // have a target but no validateMenuItem implementation — which made
         // the read-only mode's "disabled" toggle clickable (v0.4.0 bug).
         menu.autoenablesItems = false
         menu.delegate = self
-        statusItem.menu = menu
         renderIcon(active: false)
         rebuildMenu()   // read-only path never calls update(); menu must still have Quit
     }
@@ -93,29 +92,74 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func rebuildMenu() {
-        let menu = statusItem.menu ?? NSMenu()
         menu.removeAllItems()
-        // About first — the conventional position in a macOS menu.
-        let about = NSMenuItem(title: "About NeverSleep", action: #selector(openAbout(_:)), keyEquivalent: "")
-        about.target = self
-        menu.addItem(about)
-        menu.addItem(.separator())
+        // Double-click mode detaches the menu: a single click must do nothing,
+        // so AppKit's click-to-open cannot be active; the menu is then opened
+        // from statusItemClicked's right-click path. Otherwise the menu stays
+        // attached and AppKit auto-opens it on click (instant, unchanged).
+        statusItem.menu = settings.doubleClickActivate ? nil : menu
+        if settings.doubleClickActivate {
+            statusItem.button?.target = self
+            statusItem.button?.action = #selector(statusItemClicked(_:))
+            statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        } else {
+            statusItem.button?.target = nil
+            statusItem.button?.action = nil
+        }
+
         let effective = active || externallySuppressed
-        // In external mode the toggle is genuinely disabled (autoenablesItems
-        // is off, so isEnabled is honored) and named for what is actually
-        // going on — a "Restore normal sleep" button that does nothing is
-        // exactly how v0.4.0 got stuck-looking.
-        let toggleTitle = externallySuppressed
-            ? "Sleep suppressed outside NeverSleep"
-            : (effective ? "Restore normal sleep" : "Keep awake with lid closed")
-        let item = NSMenuItem(title: toggleTitle, action: #selector(didToggle(_:)), keyEquivalent: "")
-        item.target = self
-        item.isEnabled = !externallySuppressed
-        menu.addItem(item)
+
+        // Status header — the state in plain words, color-coded. Not clickable
+        // (isEnabled = false, honored because autoenablesItems is off).
+        let header = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        let headerText: NSAttributedString
+        let subText: String
+        if externallySuppressed {
+            headerText = joined(dot("●", color: .systemOrange), bold("Sleep suppressed outside NeverSleep", color: .systemOrange))
+            subText = "pmset is managed outside this app"
+        } else if effective {
+            headerText = joined(dot("●", color: .systemGreen), bold("Keeping the Mac awake", color: .systemGreen))
+            subText = "lid closed = no sleep · display off"
+        } else {
+            headerText = joined(dot("○", color: .secondaryLabelColor), bold("Normal macOS sleep", color: .secondaryLabelColor))
+            subText = "Mac sleeps normally when lid closes"
+        }
+        header.attributedTitle = headerText
+        menu.addItem(header)
+        let sub = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        sub.isEnabled = false
+        sub.attributedTitle = small(subText)
+        menu.addItem(sub)
         menu.addItem(.separator())
+
+        // THE toggle — the loudest item in the menu, titled as the action, with
+        // a hint suffix. In external mode it is genuinely disabled (see the
+        // v0.4.0 lesson in the header comment) and named for what is going on.
+        let toggle = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        toggle.target = self
+        toggle.isEnabled = !externallySuppressed
+        toggle.action = externallySuppressed ? nil : #selector(didToggle(_:))
+        if externallySuppressed {
+            toggle.attributedTitle = bold("Sleep suppressed outside NeverSleep", color: .secondaryLabelColor)
+        } else if effective {
+            toggle.attributedTitle = joined(bold("Restore normal sleep", color: .labelColor), small("  click to turn OFF"))
+        } else {
+            toggle.attributedTitle = joined(bold("Keep awake when lid closes", color: .labelColor), small("  click to turn ON"))
+        }
+        menu.addItem(toggle)
+        menu.addItem(.separator())
+
         let power = NSMenuItem(title: "Power source: \(powerSource.rawValue)", action: nil, keyEquivalent: "")
         power.isEnabled = false
         menu.addItem(power)
+        // About demoted from the macOS-conventional first slot deliberately:
+        // the top of the menu belongs to the state + the one function this app
+        // has (the whole point of the 2026-11-15 redesign). About, Preferences
+        // and Quit live in the lower cluster.
+        let about = NSMenuItem(title: "About NeverSleep", action: #selector(openAbout(_:)), keyEquivalent: "")
+        about.target = self
+        menu.addItem(about)
         if let updater {
             // Sparkle's standard target/action; enabled state handled by Sparkle itself.
             let checkUpdates = NSMenuItem(title: "Check for Updates…",
@@ -146,7 +190,27 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let quit = NSMenuItem(title: "Quit NeverSleep", action: #selector(quitApp(_:)), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
-        statusItem.menu = menu
+    }
+
+    /// Click handling — only wired in double-click mode (NoSleep parity #5:
+    /// "Use double click to activate"). Left double-click toggles; left single
+    /// click intentionally does nothing; right-click (or ⌃-click, the macOS
+    /// convention) opens the menu so Preferences/Quit stay reachable.
+    @objc private func statusItemClicked(_ sender: Any?) {
+        guard settings.doubleClickActivate, let event = NSApp.currentEvent else { return }
+        let controlClick = event.modifierFlags.contains(.control)
+        if event.type == .rightMouseUp || (event.type == .leftMouseUp && controlClick) {
+            openMenuFromButton()
+            return
+        }
+        guard event.type == .leftMouseUp, event.clickCount >= 2 else { return }
+        onToggle(!active)
+    }
+
+    /// Programmatic menu open for the right-click path (the menu is detached
+    /// in double-click mode, so AppKit's auto-open is unavailable).
+    private func openMenuFromButton() {
+        statusItem.popUpMenu(menu)
     }
 
     @objc private func didToggle(_ sender: NSMenuItem) {
@@ -170,6 +234,36 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         NSWorkspace.shared.open(URL(string: "https://github.com/Marcus1571/NeverSleep/issues")!)
     }
     @objc private func quitApp(_ sender: NSMenuItem) { onQuit() }
+}
+
+// Attributed-string builders for the redesigned menu (state header + the
+// loud toggle). Native AppKit only — bold/colored text is what makes the
+// one function of this app unmistakable in the menu (2026-11-15 redesign).
+private func joined(_ parts: NSAttributedString...) -> NSAttributedString {
+    let out = NSMutableAttributedString()
+    parts.forEach { out.append($0) }
+    return out
+}
+
+private func bold(_ text: String, color: NSColor) -> NSAttributedString {
+    NSAttributedString(string: text, attributes: [
+        .font: NSFont.boldSystemFont(ofSize: 13),
+        .foregroundColor: color,
+    ])
+}
+
+private func small(_ text: String) -> NSAttributedString {
+    NSAttributedString(string: text, attributes: [
+        .font: NSFont.systemFont(ofSize: 11),
+        .foregroundColor: NSColor.secondaryLabelColor,
+    ])
+}
+
+private func dot(_ glyph: String, color: NSColor) -> NSAttributedString {
+    NSAttributedString(string: glyph + "  ", attributes: [
+        .font: NSFont.systemFont(ofSize: 13),
+        .foregroundColor: color,
+    ])
 }
 
 private extension NSImage {

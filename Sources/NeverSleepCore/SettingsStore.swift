@@ -23,12 +23,21 @@ public final class SettingsStore: ObservableObject {
     @Published public var launchAtLogin: Bool {
         didSet { defaults.set(launchAtLogin, forKey: Keys.launchAtLogin); LoginItem.set(enabled: launchAtLogin) }
     }
+    /// NoSleep parity #5 ("Use double click to activate"): when on, a single
+    /// click on the menu-bar icon does nothing and a double-click toggles;
+    /// right-click opens the menu. Mutually exclusive with click-opens-menu
+    /// (a double-click's first press would open it), which is why NoSleep
+    /// shipped this as a mode too.
+    @Published public var doubleClickActivate: Bool {
+        didSet { defaults.set(doubleClickActivate, forKey: Keys.doubleClickActivate) }
+    }
 
     private let defaults = UserDefaults.standard
     private enum Keys {
         static let suppressOnAC = "suppressOnAC"
         static let suppressOnBattery = "suppressOnBattery"
         static let useBlackWhiteIcons = "useBlackWhiteIcons"
+        static let doubleClickActivate = "doubleClickActivate"
         static let launchAtLogin = "launchAtLogin"
     }
 
@@ -37,6 +46,7 @@ public final class SettingsStore: ObservableObject {
         suppressOnBattery = defaults.object(forKey: Keys.suppressOnBattery) as? Bool ?? false
         useBlackWhiteIcons = defaults.object(forKey: Keys.useBlackWhiteIcons) as? Bool ?? true
         launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
+        doubleClickActivate = defaults.object(forKey: Keys.doubleClickActivate) as? Bool ?? false
         // Adopt the live truth when it drifted from the stored default (e.g. the
         // login item was turned off in System Settings, or on before this ran).
         // Never auto-registers on launch: first-order divergence from "off" to

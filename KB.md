@@ -12,7 +12,7 @@ Reproduced from NoSleep v1.5.x source and changelog (research trail in `findings
 | 2 | Never sleep on Battery | Independent toggle, applies only on battery |
 | 3 | Menu-bar "Zz" toggle | Filled Zz = awake-when-closed active; outline = inactive (**implemented 0.2.1**, imitating the original's `ZzActive`/`ZzInactive` template-image swap on state change); one click toggles the mode that matches the *current* power source |
 | 4 | Use black and white menu bar icons | Preference: monochrome vs. accent-colored icons |
-| 5 | Use double click to activate | Double-click on the icon toggles like the single-click path |
+| 5 | Use double click to activate | **Implemented 0.9.0** as a Preferences mode: when on, the menu detaches (single click = no-op), a left double-click toggles, right-click/⌃-click opens the menu — mutually exclusive with click-opens-menu by design (a double-click's first press would open it), same reason NoSleep shipped it as a mode |
 | 6 | Require password on display opening | **Dropped** (decision, 2026-11-09): no auto-lock at all — closing the lid turns the display off natively and the session stays unlocked; users lock by hand (`Control-Command-Q`) when they want to |
 | 7 | Start NoSleep utility on system startup | Login item (**implemented 0.2.0**): `SMAppService.mainApp`, macOS 13+ (LaunchAgent plist fallback on 11–12); menu checkmark + Preferences toggle |
 | 8 | Automatically check for updates | **Implemented 0.4.0**: Sparkle 2.8 embedded — startup + weekly checks, automatic installs, Check for Updates… menu item (⌘U); appcast EdDSA-signed on repo `main` (Dropped 2026-11-09 for lack of a Developer ID; reversed 2026-11-10 when the operator acquired one — see the 0.4.0 CHANGELOG entry) |
