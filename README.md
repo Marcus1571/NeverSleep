@@ -20,15 +20,15 @@ The menu-bar icon tells you the state instantly, imitating the original NoSleep'
 |--------------|----------------------|
 | <img src="docs/img/icon-normal-sleep.png" width="40" alt="menu bar icon: outline Zz, normal sleep"> | <img src="docs/img/icon-awake.png" width="40" alt="menu bar icon: filled Zz, awake-when-closed active"> |
 
-Clicking it opens the menu (About, toggle, live power source, Check for Updates, Preferences, Launch at login):
+**Double-click the icon to toggle.** That is the whole interaction — no digging through menus to find the switch. Right-click (or ⌃-click) opens the menu: the state in plain words color-coded at the top, the toggle as the loudest item, and About / Preferences / Quit below:
 
-| Menu | Preferences |
+| Menu (right-click) | Preferences |
 |------|-------------|
-| <img src="docs/img/menu.png" width="300" alt="NeverSleep menu: Restore normal sleep, power source, Check for Updates, Preferences, Launch at login, Quit"> | <img src="docs/img/preferences.png" width="300" alt="Preferences: separate AC/battery toggles, black-and-white icons, launch at login"> |
+| <img src="docs/img/menu.png" width="300" alt="NeverSleep menu: green status header 'Keeping the Mac awake', bold 'Restore normal sleep — click to turn OFF', power source, About, Check for Updates, Preferences, Launch at login, Report a Bug, Quit"> | <img src="docs/img/preferences.png" width="300" alt="Preferences: separate AC/battery toggles, black-and-white icons, launch at login"> |
 
 **What it does (v0 spec, representative — full contract in [KB.md — Feature contract](KB.md#feature-contract-from-nosleep)):**
 
-- One menu-bar toggle (`Zz` icon, filled = awake): closes-the-lid sleep prevention, per power source
+- **Double-click the menu-bar icon** (`Zz`, filled = awake): closes-the-lid sleep prevention, per power source
 - Separate behavior on battery vs. AC, like NoSleep's two independent toggles
 - State restored to normal macOS sleep behavior the moment the app quits
 
@@ -38,7 +38,7 @@ Read [STATUS.md](STATUS.md) for where development stands, and [findings.md](find
 
 ## Install
 
-Download `NeverSleep-<version>.dmg` from [GitHub Releases](https://github.com/Marcus1571/NeverSleep/releases/latest) — it is Developer ID–signed and notarized by Apple, so Gatekeeper opens it silently. Drag **NeverSleep** to **/Applications** and launch it. The app updates itself (Sparkle checks at startup and weekly and installs automatically, or force one via **Check for Updates… ⌘U**), and **Launch at login** in the menu is all the setup there is. One password, ever: the first toggle offers to install the privileged helper, and after that toggling, restoring and quitting never prompt again ([KB.md — Privileged helper](KB.md#privileged-helper-v030)).
+Download `NeverSleep-<version>.dmg` from [GitHub Releases](https://github.com/Marcus1571/NeverSleep/releases/latest) — it is Developer ID–signed and notarized by Apple, so Gatekeeper opens it silently. Drag **NeverSleep** to **/Applications** and launch it. The app updates itself (Sparkle checks at startup and weekly and installs automatically, or force one via **Check for Updates… ⌘U**), and **Launch at login** (in the right-click menu) is all the setup there is. One password, ever: the first toggle offers to install the privileged helper, and after that toggling, restoring and quitting never prompt again ([KB.md — Privileged helper](KB.md#privileged-helper-v030)).
 
 ## Build from source
 
@@ -62,9 +62,10 @@ swift build -c release
 # 5. Install + smoke test
 rm -rf /Applications/NeverSleep.app && ditto .build/app/NeverSleep.app /Applications/NeverSleep.app
 open /Applications/NeverSleep.app
-# smoke test: toggle "Keep awake with lid closed", close the lid, reopen it — the session must still be live
-#             (audio/video calls keep running with the screen off). Then quit the app and verify sleep behaves
-#             exactly as before quitting.
+# smoke test: double-click the menu-bar icon (suppression on), close the lid, reopen it — the
+#             session must still be live (audio/video calls keep running with the screen off).
+#             Double-click again to restore, quit the app and verify sleep behaves exactly as
+#             before quitting. Right-click opens the menu; hover the icon for the gesture hint.
 ```
 
 Universal binary (Intel + Apple Silicon in one app). SwiftPM ≥ 5.6 handles both arches in one go; on an older toolchain, build each arch and `lipo`-join instead:
