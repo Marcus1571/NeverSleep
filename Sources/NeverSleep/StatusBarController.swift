@@ -87,25 +87,20 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
         statusItem.button?.image = img
         statusItem.button?.toolTip = effective
-            ? "NeverSleep: awake with lid closed (\(powerSource.rawValue))"
-            : "NeverSleep: normal sleep"
+            ? "NeverSleep: awake with lid closed (\(powerSource.rawValue)) — double-click to toggle · right-click for menu"
+            : "NeverSleep: normal sleep — double-click to keep awake · right-click for menu"
     }
 
     private func rebuildMenu() {
         menu.removeAllItems()
-        // Double-click mode detaches the menu: a single click must do nothing,
-        // so AppKit's click-to-open cannot be active; the menu is then opened
-        // from statusItemClicked's right-click path. Otherwise the menu stays
-        // attached and AppKit auto-opens it on click (instant, unchanged).
-        statusItem.menu = settings.doubleClickActivate ? nil : menu
-        if settings.doubleClickActivate {
-            statusItem.button?.target = self
-            statusItem.button?.action = #selector(statusItemClicked(_:))
-            statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
-        } else {
-            statusItem.button?.target = nil
-            statusItem.button?.action = nil
-        }
+        // The menu is ALWAYS detached (since 0.10.0): the icon's gestures are
+        // double-click = toggle and right-click/⌃-click = open this menu. A
+        // detached menu is required — with it attached, a double-click's first
+        // press would open the menu instead of starting the pair.
+        statusItem.menu = nil
+        statusItem.button?.target = self
+        statusItem.button?.action = #selector(statusItemClicked(_:))
+        statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
         let effective = active || externallySuppressed
 
@@ -192,12 +187,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(quit)
     }
 
-    /// Click handling — only wired in double-click mode (NoSleep parity #5:
-    /// "Use double click to activate"). Left double-click toggles; left single
-    /// click intentionally does nothing; right-click (or ⌃-click, the macOS
-    /// convention) opens the menu so Preferences/Quit stay reachable.
+    /// Click handling — double-click toggles (timing-based detection:
+    /// NSEvent.clickCount is unreliable here, both mouseUps of a pair can
+    /// report cc=1), left single click intentionally does nothing, right-click
+    /// (or ⌃-click) opens the menu so Preferences/Quit stay reachable.
     @objc private func statusItemClicked(_ sender: Any?) {
-        guard settings.doubleClickActivate, let event = NSApp.currentEvent else { return }
+        guard let event = NSApp.currentEvent else { return }
         // Double-click detection is timing-based (two actions within the
         // system double-click interval): NSEvent.clickCount is unreliable
         // here — posted events and some status-item paths deliver cc=1 on

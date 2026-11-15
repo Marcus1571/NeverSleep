@@ -2,6 +2,16 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.10.0] — 2026-11-15: double-click is the primary gesture — always on, setting removed
+
+Version bump: minor (primary interaction change). Bundle version (`Scripts/make-app.sh`) 0.9.1 → 0.10.0 (build 901 → 1000).
+
+**Behavior change (operator decision, same day as 0.9.1):** "why do we even activate that in the settings — it is just a double click on the top bar icon". The double-click gesture is now **always on** and the Preferences toggle is gone:
+- `Sources/NeverSleep/StatusBarController.swift` — the menu is **always detached**; gestures: **double-click = toggle** (timing-based pair detection, unchanged from 0.9.1), **right-click/⌃-click = open menu**, left single click = no-op. The icon tooltip now teaches the gestures ("double-click to toggle · right-click for menu").
+- `Sources/NeverSleepCore/SettingsStore.swift` — `doubleClickActivate` removed (property, key, init read); `Sources/NeverSleep/PreferencesView.swift` — toggle + caption removed.
+- Users upgrading from ≤ 0.9.x with the mode off: their double-click starts working without any action; users who had it on lose nothing. The stray `doubleClickActivate` default key in old plists stays as unread cruft (same pattern as `ownsActiveSuppression`, 0.4.2).
+- The menu (status header + action-titled toggle) is unchanged and remains the way to reach About/Preferences/Quit — via right-click/⌃-click now.
+
 ## [0.9.1] — 2026-11-15: double-click detection is timing-based (hotfix, same day)
 
 Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.9.0 → 0.9.1 (build 800 → 901).
