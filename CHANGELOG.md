@@ -2,6 +2,16 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.12.0] — 2026-11-16: keyboard shortcut recorder in Preferences (global toggle combo)
+
+Version bump: minor (new feature). Bundle version (`Scripts/make-app.sh`) 0.11.1 → 0.12.0 (build 1101 → 1200).
+
+**Behavior change (new feature — feasibility answer discussed with the operator first)**
+- **Global keyboard toggle**: Preferences gains a **shortcut recorder field** (the standard "black field": click, press the combo) — press the recorded combo anywhere and NeverSleep toggles lid-closed suppression, exactly like the double-click (both gestures coexist; the combo works even when another app is frontmost).
+- Implementation: the **KeyboardShortcuts** SPM package (sindresorhus, v2.4.0 — the professional recorder used by many shipped Mac apps): `Package.swift` (+dependency/product), `Sources/NeverSleep/ShortcutConflicts.swift` (new), `AppDelegate.swift` (+`shortcutChangeObserver`, hotkey wiring, warning recompute), `PreferencesView.swift` (recorder + hint/warning), `SettingsStore.swift` (+`shortcutWarning` published).
+- **Conflict warning (curated, honest scope)**: macOS has no API to enumerate other apps' registered global hotkeys and registration does not fail when two apps share one — a guaranteed "not free" warning is impossible. The field shows an orange warning for the dangerous picks: ⌘/⌃Space (Spotlight / input source), ⌘⌥Esc (Force Quit), ⌘⇧3/4/5 (screenshots), and plain **⌘-letter** combos (a global hotkey consumes the keypress, shadowing the frontmost app's own ⌘-shortcut everywhere — the caption recommends adding ⌥ or ⌃). Hint text states the honest residual: if pressing the combo also triggers something else, pick another.
+- Compile notes: KeyboardShortcuts 2.4.0's API is `getShortcut(for:)` / `onKeyUp(for:)` / `onKeyDown(for:)`; its change notification `.shortcutByNameDidChange` is **internal** — observed via the literal `Notification.Name("KeyboardShortcuts_shortcutByNameDidChange")` (pinned to the dependency version); `Shortcut.carbonKeyCode`/`carbonModifiers` are `Int`, `Key` has `.rawValue`, and the shortcut persists in defaults as a JSON string under `KeyboardShortcuts_toggleSuppression` (used for the E2E test).
+
 ## [0.11.1] — 2026-11-16: hourly heartbeat in the log (diagnostic for silent deaths)
 
 Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.11.0 → 0.11.1 (build 1100 → 1101).

@@ -1,5 +1,6 @@
 import AppKit
 import Sparkle
+import KeyboardShortcuts
 import NeverSleepCore
 
 final class StatusBarController: NSObject, NSMenuDelegate {
@@ -163,7 +164,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             checkUpdates.target = updater
             menu.addItem(checkUpdates)
         }
-        let prefs = NSMenuItem(title: "Preferences…", action: #selector(openPreferences(_:)), keyEquivalent: ",")
+        let prefs = NSMenuItem(title: "⚙️ Preferences…", action: #selector(openPreferences(_:)), keyEquivalent: ",")
         prefs.target = self
         menu.addItem(prefs)
         // Live truth each rebuild, so an external change in System Settings matches too.

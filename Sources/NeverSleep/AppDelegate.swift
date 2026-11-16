@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 import Combine
 import Sparkle
+import KeyboardShortcuts
 import NeverSleepCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -18,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var blankedThisClosure = false
     // Sparkle: nil for bare-binary launches (Sparkle can only update a bundled app).
     private var updaterController: SPUStandardUpdaterController?
+    private var shortcutChangeObserver: Any?
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         Log.info("launched: build=\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] ?? "?"))")
@@ -74,6 +76,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                         onQuit: { [weak self] in self?.quitClean() },
                                         updater: updaterController,
                                         externallySuppressed: externallySuppressed)
+        // Global keyboard toggle (0.12.0): the Preferences recorder stores the
+        // combo (KeyboardShortcuts.Name persists itself); firing it toggles
+        // suppression exactly like the double-click does.
+        KeyboardShortcuts.onKeyUp(for: .toggleSuppression) { [weak self] in
+            guard let self, let statusBar = self.statusBar else { return }
+            self.handleToggle(!self.controller.isSleepSuppressed())
+        }
+        // Curated conflict warning for the recorder (macOS has no API to
+        // enumerate other apps' global hotkeys — see ShortcutConflicts).
+        // Recomputed once at launch and whenever KeyboardShortcuts posts its
+        // shortcut-by-name change notification (set/removed in the recorder).
+        settings.shortcutWarning = ShortcutConflicts
+            .warning(for: KeyboardShortcuts.getShortcut(for: .toggleSuppression))
+        shortcutChangeObserver = NotificationCenter.default.addObserver(
+            // KeyboardShortcuts keeps this notification internal; the literal
+            // value mirrors its `shortcutByNameDidChange` (pinned 2.4.0).
+            forName: Notification.Name("KeyboardShortcuts_shortcutByNameDidChange"),
+            object: nil, queue: .main) { [weak self] _ in
+            self?.settings.shortcutWarning = ShortcutConflicts
+                .warning(for: KeyboardShortcuts.getShortcut(for: .toggleSuppression))
+        }
         // The poll runs in every mode: the read-only path previously skipped
         // it, which froze the menu on "Power source: Unknown" (v0.4.0 bug).
         pollPowerSource(initial: true)

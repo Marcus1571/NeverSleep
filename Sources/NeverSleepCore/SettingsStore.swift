@@ -32,6 +32,8 @@ public final class SettingsStore: ObservableObject {
         static let launchAtLogin = "launchAtLogin"
     }
 
+    @Published public var shortcutWarning: String?   // curated conflict hint for the Preferences shortcut recorder (0.12.0)
+
     public init(defaults: UserDefaults = .standard) {
         suppressOnAC = defaults.object(forKey: Keys.suppressOnAC) as? Bool ?? false
         suppressOnBattery = defaults.object(forKey: Keys.suppressOnBattery) as? Bool ?? false

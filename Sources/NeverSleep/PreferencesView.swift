@@ -1,4 +1,5 @@
 import SwiftUI
+import KeyboardShortcuts
 import NeverSleepCore
 
 struct PreferencesView: View {
@@ -12,6 +13,20 @@ struct PreferencesView: View {
             Divider()
             Toggle("Use black and white menu bar icons", isOn: $settings.useBlackWhiteIcons)
             Toggle("Launch NeverSleep at login", isOn: $settings.launchAtLogin)
+            Divider()
+            // Global keyboard toggle (0.12.0): the recorder is the standard
+            // black field (KeyboardShortcuts package) — click it, press the
+            // combo; the shortcut works system-wide, like the double-click.
+            Text("Keyboard shortcut").font(.subheadline).fontWeight(.semibold)
+            KeyboardShortcuts.Recorder(for: .toggleSuppression)
+            if let warning = settings.shortcutWarning {
+                Text(warning).font(.caption2).foregroundColor(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Toggles NeverSleep from anywhere — even when another app is frontmost. macOS allows two apps to claim the same combo; if pressing it also triggers something else, pick another.")
+                    .font(.caption2).foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Divider()
             Text("A Mac awake with a closed lid has reduced cooling — use it while you are using the machine, not in a backpack.").font(.footnote).foregroundColor(.secondary)
         }
