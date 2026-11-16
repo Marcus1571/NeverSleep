@@ -2,6 +2,13 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.12.2] — 2026-11-16: Clear button next to the shortcut recorder
+
+Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.12.1 → 0.12.2 (build 1201 → 1202).
+
+**Fixed (operator report: the recorder's ✕ did nothing)**
+- `Sources/NeverSleep/PreferencesView.swift` — a **⌫ Clear button** next to the recorder, calling the package's public removal API (`KeyboardShortcuts.setShortcut(nil, for:)` — unregister + storage removal + the change notification the recorder observes). Why: the recorder's embedded ✕ (the search-field cancel cell) is unreliable on macOS 27 — verified via AX that the removal path itself works (`setShortcut(nil)` through the package's ✕ removed the stored shortcut and unregistered the hotkey), while clicks on the glyph did not land (its hit area sits offset from the drawn glyph; clicks at the visual center did nothing). The Clear button always works.
+
 ## [0.12.1] — 2026-11-16: hotfix — SPM resource bundle missing from the packaged app (Preferences crash)
 
 Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.12.0 → 0.12.1 (build 1200 → 1201).

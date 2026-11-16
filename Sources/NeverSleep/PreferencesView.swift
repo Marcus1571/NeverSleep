@@ -18,7 +18,21 @@ struct PreferencesView: View {
             // black field (KeyboardShortcuts package) — click it, press the
             // combo; the shortcut works system-wide, like the double-click.
             Text("Keyboard shortcut").font(.subheadline).fontWeight(.semibold)
-            KeyboardShortcuts.Recorder(for: .toggleSuppression)
+            // The recorder's own ✕ (embedded search-field cancel cell) does not
+            // persist the removal on macOS 27 (operator-reported, 2026-11-16) —
+            // so clearing goes through our own button, which calls the
+            // package's public removal API (setShortcut(nil): unregister +
+            // storage removal + the change notification the recorder observes).
+            HStack(spacing: 8) {
+                KeyboardShortcuts.Recorder(for: .toggleSuppression)
+                Button {
+                    KeyboardShortcuts.setShortcut(nil, for: .toggleSuppression)
+                } label: {
+                    Image(systemName: "delete.left")
+                        .frame(width: 30, height: 24)
+                }
+                .help("Clear the shortcut")
+            }
             if let warning = settings.shortcutWarning {
                 Text(warning).font(.caption2).foregroundColor(.orange)
                     .fixedSize(horizontal: false, vertical: true)
