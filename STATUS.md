@@ -47,6 +47,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.12.0 released** (2026-11-16): keyboard-shortcut recorder in Preferences (KeyboardShortcuts 2.4.0 SPM package — the professional "black field") + global toggle hotkey; curated conflict warnings (honest scope: macOS can't enumerate other apps' hotkeys). Full sequence, released, installed. **E2E live:** a stored combo (⌃⌥D, crafted directly into the package's defaults format `KeyboardShortcuts_toggleSuppression` = JSON of the Shortcut codable) toggled suppression OFF then back ON via synthetic keypresses (`SleepDisabled 1 → 0 → 1`) — the Carbon hotkey fires globally. The ⌃⌥D combo is left active for the operator (changeable in the Preferences recorder); the ⚙️ Preferences menu emoji also shipped in this release.
 
+**v0.12.1 released** (2026-11-16, hotfix): the operator reported a crash on **⚙️ Preferences…** open — crash report `NeverSleep-2026-11-16-211801.ips`: `RecorderCocoa.init → String.localized → NSBundle.module` static-assert (EXC_BREAKPOINT). Cause: KeyboardShortcuts loads localized strings via its **SPM resource bundle** (`KeyboardShortcuts_KeyboardShortcuts.bundle`), and `make-app.sh` shipped the bare binary only. Fixed: make-app.sh copies every `.build/release/*.bundle` into Resources. E2E live: Preferences opens clean, recorder shows the persisted ⌃⌥D. The 0.12.0 DMG on GitHub is broken for fresh installs — 0.12.1 replaces it (Sparkle auto-update pulls 0.11.x users straight to 0.12.1, skipping the broken 0.12.0 since the appcast only carries the newest).
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
