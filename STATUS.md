@@ -45,6 +45,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.11.1 released** (2026-11-16, hotfix same day): hourly heartbeat log line (`heartbeat: alive (pid …, system uptime …)`) — diagnostic-only. Motivation: the operator reported the 0.11.0 instance "gone" ~20:00; it had died silently between 15:13 and ~20:02 with **zero trace** (no crash report, no jetsam, no launchd record, no termination log line — force-quit/SIGKILL-class death), leaving a ~5 h blind spot. The heartbeat bounds the next such death to ±1 h. Installed and healthy (adopted leftover, suppression ON). The unexplained death itself is still open — if it recurs, the heartbeat window plus a `log show` query at that time is the plan.
 
+**v0.12.0 released** (2026-11-16): keyboard-shortcut recorder in Preferences (KeyboardShortcuts 2.4.0 SPM package — the professional "black field") + global toggle hotkey; curated conflict warnings (honest scope: macOS can't enumerate other apps' hotkeys). Full sequence, released, installed. **E2E live:** a stored combo (⌃⌥D, crafted directly into the package's defaults format `KeyboardShortcuts_toggleSuppression` = JSON of the Shortcut codable) toggled suppression OFF then back ON via synthetic keypresses (`SleepDisabled 1 → 0 → 1`) — the Carbon hotkey fires globally. The ⌃⌥D combo is left active for the operator (changeable in the Preferences recorder); the ⚙️ Preferences menu emoji also shipped in this release.
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
