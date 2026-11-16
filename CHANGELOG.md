@@ -1,6 +1,13 @@
-# CHANGELOG
+# Changelog
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
+
+## [0.11.0] — 2026-11-16: tiered donation buttons on the About page (☕ €1 / 🍔 €5 / 🍣 €10)
+
+Version bump: minor (new feature). Bundle version (`Scripts/make-app.sh`) 0.10.0 → 0.11.0 (build 1000 → 1100).
+
+**Behavior change (new feature — design approved via light/dark mockup; icons picked by the operator)**
+- `Sources/NeverSleep/AboutView.swift` — the donation block gains **three tier buttons** between the `paypal.me` link and the caption: ☕ **€1** (coffee) · 🍔 **€5** (burger) · 🍣 **€10** (sushi night). Each is a `Link` opening PayPal.me **with the amount prefilled**: `https://paypal.me/marcodalmoro/1eur`, `/5eur`, `/10eur` — the documented PayPal.Me format is `paypal.me/<user>/<amount><currency>` (the lowercase `eur` suffix pins the currency; verified against PayPal's FAQ before implementing). Pill styling: white emoji + amount on a PayPal-blue rounded rectangle (`RoundedRectangle` 9pt), full-width thirds in an `HStack`, accessibility labels "Donate €N via PayPal". QR and the generic link stay (camera-first remains the primary path). Caption reworded: "Scan the code, tap the link, or pick a coffee — a coffee (€1), a burger (€5), a sushi night (€10). Thank you!"
 
 ## [0.10.0] — 2026-11-15: double-click is the primary gesture — always on, setting removed
 
