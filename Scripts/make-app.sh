@@ -95,6 +95,13 @@ cp assets/paypal-qr.png "$CONTENTS/Resources/paypal-qr.png"
 # on first toggle (see KB "Privileged helper"). Signed before the app seal.
 cp .build/release/neversleep-helper "$CONTENTS/Resources/neversleep-helper"
 
+# SPM resource bundles (0.12.0): KeyboardShortcuts' Recorder loads localized
+# strings via Bundle.module — without this bundle in Resources the About ->
+# Preferences open crashes on the static-assert in Bundle.module's accessor.
+for bundle in .build/release/*.bundle; do
+  [ -e "$bundle" ] && cp -R "$bundle" "$CONTENTS/Resources/"
+done
+
 # Sign deepest-first: nested executables (Sparkle framework with its XPC
 # services and Autoupdate helper, and our helper binary) need valid signatures
 # before the app seal — and before notarization can even attempt.

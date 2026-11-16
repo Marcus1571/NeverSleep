@@ -24,7 +24,7 @@ The menu-bar icon tells you the state instantly, imitating the original NoSleep'
 
 | Menu (right-click) | Preferences |
 |------|-------------|
-| <img src="docs/img/menu.png" width="300" alt="NeverSleep menu: green status header 'Keeping the Mac awake', bold 'Restore normal sleep — click to turn OFF', power source, About, Check for Updates, Preferences, Launch at login, Report a Bug, Quit"> | <img src="docs/img/preferences.png" width="300" alt="Preferences: separate AC/battery toggles, black-and-white icons, launch at login"> |
+| <img src="docs/img/menu.png" width="300" alt="NeverSleep menu: green status header 'Keeping the Mac awake', bold 'Restore normal sleep — click to turn OFF', power source, About, Check for Updates, Preferences, Launch at login, Report a Bug, Quit"> | <img src="docs/img/preferences-recorder.png" width="300" alt="Preferences: separate AC/battery toggles, black-and-white icons, launch at login, keyboard-shortcut recorder (⌃⌥D)"> |
 
 About (right-click menu → **About NeverSleep**) — tiered donations: ☕ €1 coffee · 🍔 €5 burger · 🍣 €10 sushi night, each opening PayPal.me with the amount prefilled:
 

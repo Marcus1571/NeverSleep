@@ -2,6 +2,13 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.12.1] — 2026-11-16: hotfix — SPM resource bundle missing from the packaged app (Preferences crash)
+
+Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.12.0 → 0.12.1 (build 1200 → 1201).
+
+**Fixed (0.12.0's DMG crashed on first Preferences open)**
+- `Scripts/make-app.sh` now copies the **SPM resource bundles** from `.build/release/` into `Contents/Resources/`. 0.12.0 shipped the bare binary only: KeyboardShortcuts' Recorder loads localized strings via `Bundle.module`, whose accessor static-asserts (EXC_BREAKPOINT, `_assertionFailure`) when the bundle is absent — reported by the operator live: clicking **⚙️ Preferences…** crashed the app (`NeverSleep-2026-11-16-211801.ips`, stack `RecorderCocoa.init → String.localized → NSBundle.module`). The bundle is `KeyboardShortcuts_KeyboardShortcuts.bundle` (named after the package); a loop copies any `*.bundle`, so future resource-carrying dependencies are covered too. **E2E verified live:** Preferences opened without crashing, the recorder reads the persisted ⌃⌥D (clear button present), app alive after open.
+
 ## [0.12.0] — 2026-11-16: keyboard shortcut recorder in Preferences (global toggle combo)
 
 Version bump: minor (new feature). Bundle version (`Scripts/make-app.sh`) 0.11.1 → 0.12.0 (build 1101 → 1200).
