@@ -78,6 +78,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // it, which froze the menu on "Power source: Unknown" (v0.4.0 bug).
         pollPowerSource(initial: true)
         schedulePowerSourcePolling()
+        scheduleHeartbeat()
+    }
+
+    /// Hourly heartbeat (0.11.1): bounds the death window when the app
+    /// vanishes without a crash report (the operator's 2026-11-16 report —
+    /// a 2026-11-15 instance died silently somewhere in a ~5 h blind spot;
+    /// force-quit-style kills leave no trace). With the heartbeat, the next
+    /// disappearance is bounded to the last logged beat.
+    private func scheduleHeartbeat() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3600) { [weak self] in
+            let uptime = Int(ProcessInfo.processInfo.systemUptime)
+            Log.info("heartbeat: alive (pid \(ProcessInfo.processInfo.processIdentifier), system uptime \(uptime)s)")
+            self?.scheduleHeartbeat()
+        }
     }
 
     private func schedulePowerSourcePolling() {

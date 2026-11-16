@@ -2,6 +2,13 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.11.1] — 2026-11-16: hourly heartbeat in the log (diagnostic for silent deaths)
+
+Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.11.0 → 0.11.1 (build 1100 → 1101).
+
+**Added (no behavior change)**
+- `Sources/NeverSleep/AppDelegate.swift` — an hourly **heartbeat log line** ("heartbeat: alive (pid …, system uptime …)"). Motivation: the operator reported NeverSleep "gone" on 2026-11-16 — the 0.11.0 instance launched 15:13 died somewhere before ~20:02 **without any trace** (no crash report in DiagnosticReports, no jetsam event, no launchd exit record, and a clean quit always logs "terminated, baseline restored" — this death logged nothing), i.e. a force-quit/SIGKILL-class death. The heartbeat bounds the next such death to ±1 h instead of a multi-hour blind spot. The current instance is healthy (relaunched by the operator, adopted its own leftover, suppression ON).
+
 ## [0.11.0] — 2026-11-16: tiered donation buttons on the About page (☕ €1 / 🍔 €5 / 🍣 €10)
 
 Version bump: minor (new feature). Bundle version (`Scripts/make-app.sh`) 0.10.0 → 0.11.0 (build 1000 → 1100).
