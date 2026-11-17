@@ -51,6 +51,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.12.3 released** (2026-11-17, hotfix): the operator reported the cooling warning truncated — root cause: `openPreferences` set a **fixed content size (480×340)** from before the keyboard section existed, clipping the taller content; plus the long texts truncated horizontally instead of wrapping (the 0.7.1 NSHostingController size-pass quirk). Fixed: `hosting.sizingOptions = [.preferredContentSize]` (window follows the content — the conflict warning can add/remove a line live), resizable window, `fixedSize(horizontal: false, vertical: true)` on both long texts. E2E live: window 460×426, headline wraps fully, cooling warning complete (screenshot in README). The 0.12.3 prefs screenshot in `docs/img/` shows the operator's own recorded combo (⇧⌘Z).
 
+**v0.14.0 released** (2026-11-17): the one-time heat warning rebuilt as the **card panel** (operator-approved design — Zz header, three illustrated SF-Symbol cards, Don't-show-again checkbox, Cancel / Keep awake buttons; wording unchanged, findings §16). Full sequence, notarized, tagged, released. **Sparkle end-to-end proof:** the operator's own install **self-updated to 0.14.0 at 13:43** (log: two `launched: build=0.14.0` entries — update + relaunch, no agent involvement). The panel's first display is left for the operator's next double-click-ON (flag 0; ticking Don't-show-again in the panel makes it one-time) — verified live by the operator's own 0.13.0 walkthrough (12:56 `heat warning: acknowledged, proceeding`).
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
