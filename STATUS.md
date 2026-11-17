@@ -49,6 +49,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.12.1 released** (2026-11-16, hotfix): the operator reported a crash on **⚙️ Preferences…** open — crash report `NeverSleep-2026-11-16-211801.ips`: `RecorderCocoa.init → String.localized → NSBundle.module` static-assert (EXC_BREAKPOINT). Cause: KeyboardShortcuts loads localized strings via its **SPM resource bundle** (`KeyboardShortcuts_KeyboardShortcuts.bundle`), and `make-app.sh` shipped the bare binary only. Fixed: make-app.sh copies every `.build/release/*.bundle` into Resources. E2E live: Preferences opens clean, recorder shows the persisted ⌃⌥D. The 0.12.0 DMG on GitHub is broken for fresh installs — 0.12.1 replaces it (Sparkle auto-update pulls 0.11.x users straight to 0.12.1, skipping the broken 0.12.0 since the appcast only carries the newest).
 
+**v0.12.3 released** (2026-11-17, hotfix): the operator reported the cooling warning truncated — root cause: `openPreferences` set a **fixed content size (480×340)** from before the keyboard section existed, clipping the taller content; plus the long texts truncated horizontally instead of wrapping (the 0.7.1 NSHostingController size-pass quirk). Fixed: `hosting.sizingOptions = [.preferredContentSize]` (window follows the content — the conflict warning can add/remove a line live), resizable window, `fixedSize(horizontal: false, vertical: true)` on both long texts. E2E live: window 460×426, headline wraps fully, cooling warning complete (screenshot in README). The 0.12.3 prefs screenshot in `docs/img/` shows the operator's own recorded combo (⇧⌘Z).
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
