@@ -2,6 +2,14 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.14.0] — 2026-11-17: heat warning rebuilt as the card panel (operator-approved design)
+
+Version bump: minor (redesigned feature surface). Bundle version (`Scripts/make-app.sh`) 0.13.0 → 0.14.0 (build 1300 → 1400).
+
+**Behavior change (UI redesign — replaces 0.13.0's plain NSAlert; same one-time logic)**
+- `Sources/NeverSleep/HeatWarningPanel.swift` (new) — the first-activation heat warning is now a **custom modal panel** with the operator-approved design: Zz icon header ("Keeping the Mac awake with the lid closed" + "placement and heat matter" intro) and **three illustrated cards** — **No enclosed spaces** (bag symbol, ⚠ badge), **Airflow matters** (laptop + wind), **Heat & performance** (laptop + fan + battery) — SF Symbol approximations of the mockup line art (exact art would need image assets), a **"Don't show again"** checkbox and **Cancel / Keep awake** buttons (button names changed from 0.13.0's "Not now / Keep the Mac awake" per the operator). Behavior unchanged: shown modally before the first activation, "Don't show again" sets `heatWarningShown`, "Cancel" aborts. `AppDelegate.handleToggle` calls `HeatWarningPanel.run()` instead of building the NSAlert; wording stays research-backed (findings.md §16).
+- Implementation: AppKit window (`NSApp.runModal(for:)` modal session, traffic lights hidden, frameless card look) + SwiftUI content; `NSApp.stopModal()` from the button closures.
+
 ## [0.13.0] — 2026-11-17: one-time heat warning on first activation + research-backed wording
 
 Version bump: minor (new feature). Bundle version (`Scripts/make-app.sh`) 0.12.3 → 0.13.0 (build 1203 → 1300).
