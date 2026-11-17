@@ -43,7 +43,7 @@ struct PreferencesView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Divider()
-            Text("A Mac awake with a closed lid has reduced cooling — use it while you are using the machine, not in a backpack.").font(.footnote).foregroundColor(.secondary)
+            Text("⚠️ Closed lid = less cooling. The Mac protects itself by slowing down — nothing breaks. But: never carry or store it awake in a bag or enclosed space, keep it on a hard surface (not bedding or your lap), and expect more battery wear from sustained heat.").font(.footnote).foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)   // wrap, never truncate (0.12.3)
                 .multilineTextAlignment(.leading)
         }

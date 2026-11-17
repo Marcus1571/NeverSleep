@@ -203,6 +203,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func handleToggle(_ on: Bool) {
         let source = lastKnownPowerSource
         Log.info("user toggle: on=\(on) source=\(source.rawValue)")
+        // First-activation heat warning (0.13.0, friend's suggestion — the
+        // phrasing is research-backed, findings.md §16): shown once, before
+        // the first ON, with a native "Don't show again" suppression button.
+        // "Not now" backs out without enabling.
+        if on, !settings.heatWarningShown {
+            let alert = NSAlert()
+            alert.messageText = "Keeping the Mac awake with the lid closed"
+            alert.informativeText = "The Mac stays fully awake even closed — it protects itself by slowing down when hot, so nothing breaks. What matters is where it sits and how hot it gets:\n\n• Never in a bag or enclosed space while it stays awake — that's the one real hazard.\n• Hard surface, airflow underneath — never bedding, pillows or your lap for long.\n• Heavy work runs hotter closed: expect fans and slower speed, and more battery wear over time."
+            alert.alertStyle = .warning
+            alert.showsSuppressionButton = true
+            alert.suppressionButton?.title = "Don't show again"
+            alert.addButton(withTitle: "Keep the Mac awake")
+            alert.addButton(withTitle: "Not now")
+            NSApp.activate(ignoringOtherApps: true)
+            let proceed = alert.runModal() == .alertFirstButtonReturn
+            if alert.suppressionButton?.state == .on {
+                settings.heatWarningShown = true
+                Log.info("heat warning: suppressed by the user")
+            }
+            guard proceed else {
+                Log.info("heat warning: user backed out, activation cancelled")
+                return
+            }
+            Log.info("heat warning: acknowledged, proceeding")
+        }
         // Turning suppression OFF is always legitimate — restoring normal
         // sleep must never be blocked by a missing per-source preference
         // (the power source can read Unknown; v0.4.0 ignored the click in

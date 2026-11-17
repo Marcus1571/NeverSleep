@@ -30,9 +30,17 @@ public final class SettingsStore: ObservableObject {
         static let suppressOnBattery = "suppressOnBattery"
         static let useBlackWhiteIcons = "useBlackWhiteIcons"
         static let launchAtLogin = "launchAtLogin"
+        static let heatWarningShown = "heatWarningShown"
     }
 
     @Published public var shortcutWarning: String?   // curated conflict hint for the Preferences shortcut recorder (0.12.0)
+
+    /// The one-time heat warning (0.13.0): shown before the first activation.
+    /// Computed over defaults — not UI-bound, so no @Published needed.
+    public var heatWarningShown: Bool {
+        get { defaults.bool(forKey: Keys.heatWarningShown) }
+        set { defaults.set(newValue, forKey: Keys.heatWarningShown) }
+    }
 
     public init(defaults: UserDefaults = .standard) {
         suppressOnAC = defaults.object(forKey: Keys.suppressOnAC) as? Bool ?? false

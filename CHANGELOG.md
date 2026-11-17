@@ -2,6 +2,15 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.13.0] — 2026-11-17: one-time heat warning on first activation + research-backed wording
+
+Version bump: minor (new feature). Bundle version (`Scripts/make-app.sh`) 0.12.3 → 0.13.0 (build 1203 → 1300).
+
+**Behavior change (new feature — friend's suggestion; research first, then phrasing + design, mockup-approved flow)**
+- **One-time heat warning before the first activation** (`AppDelegate.handleToggle`): the first ON — from any gesture (double-click, keyboard shortcut, menu) — shows a warning-style `NSAlert` ("Keeping the Mac awake with the lid closed") with the research-backed risk phrasing (findings.md §16: the Mac protects itself by slowing down; the one real hazard is bags/enclosed spaces; hard surfaces; battery wear from sustained heat — never the false "this could break your Mac" claim), a native **"Don't show again"** suppression button (`showsSuppressionButton`, defaults key `heatWarningShown` via `SettingsStore`), and buttons **"Keep the Mac awake" / "Not now"** — "Not now" cancels the activation. The warning fires only on explicit user ON paths; preference enforcement at launch is untouched.
+- `PreferencesView.swift` — the cooling footnote upgraded to the same research-backed wording with a **⚠️ icon** ("Closed lid = less cooling. The Mac protects itself by slowing down — nothing breaks. But: never carry or store it awake in a bag or enclosed space…").
+- Research trail: `findings.md` §16 (Apple temperature/safety/battery pages + clamshell guides; verdict: never frame it as "could break your Mac").
+
 ## [0.12.3] — 2026-11-17: Preferences window sizes to its content (no more truncation)
 
 Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.12.2 → 0.12.3 (build 1202 → 1203).

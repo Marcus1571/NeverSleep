@@ -154,3 +154,18 @@ Findings:
 Verdict: whenever a freshly-installed local copy reports "Unnotarized
 Developer ID", submit the zipped .app itself and staple it — do not treat a
 notarized DMG as covering the bare app bundle.
+
+## 16. Realistic overheating risks for closed-lid suppression (friend's suggestion, 2026-11-16)
+
+Research for the first-use heat warning: what can actually go wrong when a MacBook stays awake with the lid closed. Sources: Apple Support "Keep your Mac laptop within acceptable operating temperatures" (102336), Apple's "Important safety information" (MacBook Air guide), Apple's battery page, plus clamshell-focused guides (clamshell.dev, Macworld, keepmacawake.com).
+
+- **Apple supports closed-display mode** (external display + power + peripherals). There is **no Apple heat guidance specific to a closed lid without a display** — the general laptop guidance applies. So "the lid closed itself is dangerous" is not supportable.
+- **"Overheating damages the Mac" is the wrong framing**: the Mac protects itself — temperature sensors, fans, thermal throttling (macOS records warning levels; `pmset -g therm` shows them), and emergency shutdowns in the extreme. Apple states compliance with safety standards. The honest consequence of sustained heat is *slower work* (throttling) and *battery wear*, not fried components.
+- **The real, documented hazards** (where to aim the warning):
+  - **Bag / enclosed space while awake** — the one genuine hazard of a keep-awake tool: no ventilation at all, and Apple explicitly warns about power adapters under blankets or pillows (fire/injury territory for the adapter + battery).
+  - **Soft surfaces** — "Don't use your Mac laptop in your bed, on a pillow, or under bedding."
+  - **Hot ambient (>35 °C) can permanently damage battery capacity** — and charging in heat damages it further. Sustained heat also accelerates battery wear over time.
+  - **Battery health in general**: a docked closed Mac lives on power; holding 100% charge for long stretches wears the battery — Optimized Battery Charging / Charge Limit are the mitigations.
+  - **Closing the lid with something on the keyboard** (pen, cable, thick camera cover) can damage the display — a closed-lid-specific closing risk.
+  - **Skin contact**: prolonged lap contact with a warm device (Apple's safety page).
+- Verdict: the warning must NOT say "this could break your Mac" (the Mac protects itself by slowing down). It says: suppression keeps the Mac awake with the lid closed — the Mac protects itself by slowing down; what you control is airflow and where it sits — **never in a bag or enclosed space (the one real hazard, Apple's own fire/injury warning class)**; hard surface, not bedding or lap for long; sustained heavy loads run hotter and wear the battery faster.
