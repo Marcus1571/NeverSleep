@@ -26,10 +26,10 @@ The menu-bar icon tells you the state instantly, imitating the original NoSleep'
 |------|-------------|
 | <img src="docs/img/menu.png" width="300" alt="NeverSleep menu: green status header 'Keeping the Mac awake', bold 'Restore normal sleep — click to turn OFF', power source, About, Check for Updates, Preferences, Launch at login, Report a Bug, Quit"> | <img src="docs/img/preferences-recorder.png" width="300" alt="Preferences: separate AC/battery toggles, black-and-white icons, launch at login, keyboard-shortcut recorder (⌃⌥D)"> |
 
-About (right-click menu → **About NeverSleep**) — tiered donations: ☕ €1 coffee · 🍔 €5 burger · 🍣 €10 sushi night, each opening PayPal.me with the amount prefilled:
+About (right-click menu → **About NeverSleep**) — redesigned in 0.15.0 to the heat-warning card style: ♥ Support card (QR + tier buttons ☕ €1 / 🍔 €5 / 🍣 €10), 🐞 Report a Bug card, 📄 License & code card:
 
 <div align="center">
-  <img src="docs/img/about-tiers.png" width="240" alt="About NeverSleep: QR code, paypal.me link, three blue donation tier buttons (€1 coffee, €5 burger, €10 sushi night)">
+  <img src="docs/img/about-cards.png" width="240" alt="About NeverSleep: icon header, Support card with QR and tier buttons, Report a Bug card, License & code card">
 </div>
 
 **What it does (v0 spec, representative — full contract in [KB.md — Feature contract](KB.md#feature-contract-from-nosleep)):**
