@@ -2,6 +2,15 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.12.3] — 2026-11-17: Preferences window sizes to its content (no more truncation)
+
+Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.12.2 → 0.12.3 (build 1202 → 1203).
+
+**Fixed (operator report: the cooling warning truncated)**
+- `AppDelegate.swift` (openPreferences) — the window had a **fixed content size (480×340)** set before the keyboard-shortcut section existed; the taller content was clipped at the tail (the cooling warning truncated mid-sentence) and the long headline truncated horizontally. Now: the window follows its content — `NSHostingController.sizingOptions = [.preferredContentSize]` (macOS 13+, window resize-mask added) with a `fittingSize` fallback for macOS 11–12.
+- `PreferencesView.swift` — the headline and the cooling caption get `fixedSize(horizontal: false, vertical: true)` (the 0.7.1 lesson: NSHostingController's size pass proposes widths that make long texts truncate instead of wrap).
+- E2E live: verified in both states — no conflict warning (window fits) and a conflicting combo set (orange warning visible, nothing truncated). Recorded in `docs/img/preferences-recorder.png`.
+
 ## [0.12.2] — 2026-11-16: Clear button next to the shortcut recorder
 
 Version bump: patch. Bundle version (`Scripts/make-app.sh`) 0.12.1 → 0.12.2 (build 1201 → 1202).

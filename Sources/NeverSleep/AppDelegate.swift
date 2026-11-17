@@ -251,10 +251,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func openPreferences() {
         if prefsWindow == nil {
-            let prefs = PreferencesView(settings: settings)
-            let window = NSWindow(contentViewController: NSHostingController(rootView: prefs))
+            let hosting = NSHostingController(rootView: PreferencesView(settings: settings))
+            let window = NSWindow(contentViewController: hosting)
             window.title = "NeverSleep Preferences"
-            window.setContentSize(NSSize(width: 480, height: 340))
+            // The content height changes (the shortcut conflict warning adds or
+            // removes a line) — the window must follow it instead of clipping
+            // the tail (0.12.3: the fixed 480×340 cut both long texts off).
+            if #available(macOS 13.0, *) {
+                hosting.sizingOptions = [.preferredContentSize]
+                window.styleMask.insert(.resizable)
+            } else {
+                window.setContentSize(hosting.view.fittingSize)
+                window.styleMask = [.titled, .closable, .resizable]
+            }
             window.center()
             prefsWindow = window
         }

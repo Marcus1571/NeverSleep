@@ -8,6 +8,7 @@ struct PreferencesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("NeverSleep keeps the Mac awake with the lid closed — ex-builtin NoSleep behavior.").font(.headline)
+                .fixedSize(horizontal: false, vertical: true)   // wrap, never truncate (0.12.3)
             Toggle("Never sleep on AC Adapter", isOn: $settings.suppressOnAC)
             Toggle("Never sleep on Battery", isOn: $settings.suppressOnBattery)
             Divider()
@@ -43,6 +44,8 @@ struct PreferencesView: View {
             }
             Divider()
             Text("A Mac awake with a closed lid has reduced cooling — use it while you are using the machine, not in a backpack.").font(.footnote).foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)   // wrap, never truncate (0.12.3)
+                .multilineTextAlignment(.leading)
         }
         .padding(22)
         .frame(width: 460)
