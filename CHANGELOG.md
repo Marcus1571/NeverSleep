@@ -2,6 +2,17 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.15.0] — 2026-11-17: About page redesigned to the card style (heat-warning design language)
+
+Version bump: minor (UI redesign). Bundle version (`Scripts/make-app.sh`) 0.14.0 → 0.15.0 (build 1400 → 1500).
+
+**Behavior change (UI redesign — applies the 0.14.0 heat-warning panel's approved design language to the About page)**
+- `Sources/NeverSleep/AboutView.swift` — fully rewritten: the flat centered stack is now the **icon header** (Zz at 52 pt + name + "Version x (build y)") over **three cards** in the heat-panel pattern (soft `Color.primary.opacity(0.03)` rounded background, badge + bold title header per card):
+  - **Support NeverSleep** (♥ blue): the PayPal QR, the three tier buttons (☕ €1 / 🍔 €5 / 🍣 €10), the generic link and the caption;
+  - **Report a Bug** (🐞 orange): the tappable Issues link;
+  - **License & code** (📄 gray): © line, the MIT / GPL-2.0 split, the repo link.
+  The tagline ("Successor to NoSleep…") stays as the footer under a divider. All content unchanged; only the presentation moved to the card style. The About window keeps its content-size-following open path (`fittingSize` at open, like the heat panel).
+
 ## [0.14.0] — 2026-11-17: heat warning rebuilt as the card panel (operator-approved design)
 
 Version bump: minor (redesigned feature surface). Bundle version (`Scripts/make-app.sh`) 0.13.0 → 0.14.0 (build 1300 → 1400).
