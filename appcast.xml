@@ -6,14 +6,14 @@
     <description>Most recent NeverSleep releases.</description>
     <language>en</language>
     <item>
-      <title>Version 0.15.0</title>
-      <pubDate>Tue, 17 Nov 2026 12:52:09 GMT</pubDate>
-      <sparkle:releaseNotesLink>https://github.com/Marcus1571/NeverSleep/releases/tag/v0.15.0</sparkle:releaseNotesLink>
-      <enclosure url="https://github.com/Marcus1571/NeverSleep/releases/download/v0.15.0/NeverSleep-0.15.0.dmg"
-                 sparkle:version="1500"
-                 sparkle:shortVersionString="0.15.0"
-                 sparkle:edSignature="hQK31P4Srq8Bbckvv6wdCmFWTkRFbd05Mw0/NexE5iOKtA18dtAvelrnpgGncqVOg6Mye+9go8rQSin/TN44Cw=="
-                 length="1759130"
+      <title>Version 0.15.1</title>
+      <pubDate>Fri, 27 Nov 2026 08:54:34 GMT</pubDate>
+      <sparkle:releaseNotesLink>https://github.com/Marcus1571/NeverSleep/releases/tag/v0.15.1</sparkle:releaseNotesLink>
+      <enclosure url="https://github.com/Marcus1571/NeverSleep/releases/download/v0.15.1/NeverSleep-0.15.1.dmg"
+                 sparkle:version="1501"
+                 sparkle:shortVersionString="0.15.1"
+                 sparkle:edSignature="3oi5EYiN7JUOqYzKcO9B3cTNePXrhiCqk1zdSCT1VsYZabh2jkLsrevkW5KOrgTsJIG8tl3dui9FEX8/EqhnAQ=="
+                 length="1759857"
                  type="application/octet-stream" />
       <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
     </item>
