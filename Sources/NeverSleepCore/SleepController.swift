@@ -239,9 +239,15 @@ public final class AdminPrivileges {
                     case .success: return .ok
                     case .failure(.refused(let why)): return .refused(why)
                     case .failure(.notInstalled): return .refused("helper unreachable")
+                    case .failure(.timedOut): return .refused("helper timed out")
                     }
                 }
                 return .refused("helper unreachable")
+            case .failure(.timedOut):
+                // Daemon is there, just slow (pmset right after boot). No reinstall:
+                // the write usually lands anyway and the 1 s poll shows the live state.
+                Log.error("helper did not reply within 30 s; not reinstalling (daemon is present)")
+                return .refused("helper timed out")
             case .failure(.refused(let why)):
                 return .refused(why)
             }

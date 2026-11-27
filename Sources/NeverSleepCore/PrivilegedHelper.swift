@@ -19,22 +19,26 @@ public enum PrivilegedHelper {
 
     public enum CommandError: Error, Equatable {
         case notInstalled          // no daemon answering on the socket
+        case timedOut              // daemon accepted the request but did not reply in time
         case refused(String)       // daemon answered ERR (write rejected / not verified)
     }
 
     // MARK: Socket plumbing
 
-    /// One request, one reply, connection closed. Returns nil whenever the
-    /// helper is absent, wedged, or slow — callers treat nil as "no helper".
-    private static func transact(_ request: String) -> String? {
+    /// One request, one reply, connection closed. `.notInstalled` = nothing
+    /// listening on the socket; `.timedOut` = the daemon took the request but
+    /// did not answer within `replyTimeout` (pmset can take 10+ s right after
+    /// boot — that is slowness, not a missing helper, and must never trigger
+    /// a reinstall prompt).
+    private static func transact(_ request: String, replyTimeout: Int) -> Result<String, CommandError> {
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
-        guard fd >= 0 else { return nil }
+        guard fd >= 0 else { return .failure(.notInstalled) }
         defer { close(fd) }
 
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
         let pathBytes = Array(socketPath.utf8)
-        guard pathBytes.count < MemoryLayout.size(ofValue: addr.sun_path) else { return nil }
+        guard pathBytes.count < MemoryLayout.size(ofValue: addr.sun_path) else { return .failure(.notInstalled) }
         withUnsafeMutableBytes(of: &addr.sun_path) { $0.copyBytes(from: pathBytes) }
 
         let connected = withUnsafePointer(to: &addr) {
@@ -42,36 +46,40 @@ public enum PrivilegedHelper {
                 connect(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
             }
         }
-        guard connected == 0 else { return nil }
+        guard connected == 0 else { return .failure(.notInstalled) }
 
-        // Never hang the UI on a wedged daemon: 3 s on every socket op.
-        var tv = timeval(tv_sec: 3, tv_usec: 0)
-        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
-        setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+        // Never hang the UI on a wedged daemon: 3 s to send, `replyTimeout` to answer.
+        var sendTV = timeval(tv_sec: 3, tv_usec: 0)
+        var recvTV = timeval(tv_sec: replyTimeout, tv_usec: 0)
+        setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &sendTV, socklen_t(MemoryLayout<timeval>.size))
+        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &recvTV, socklen_t(MemoryLayout<timeval>.size))
 
         let payload = Data((request + "\n").utf8)
         let sent = payload.withUnsafeBytes { raw -> Int in
             send(fd, raw.baseAddress, raw.count, 0)
         }
-        guard sent == payload.count else { return nil }
+        guard sent == payload.count else { return .failure(.notInstalled) }
 
         var buf = [UInt8](repeating: 0, count: 1024)
         let n = recv(fd, &buf, buf.count, 0)
-        guard n > 0 else { return nil }
-        return String(decoding: buf[0..<n], as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard n > 0 else { return .failure(.timedOut) }
+        return .success(String(decoding: buf[0..<n], as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     /// Non-nil when a helper of the expected protocol version is answering.
     public static func handshake() -> String? {
-        guard let reply = transact("PING") else { return nil }
+        guard case .success(let reply) = transact("PING", replyTimeout: 3) else { return nil }
         guard reply == "OK neversleep-helper/\(protocolVersion)" else { return nil }
         return reply
     }
 
     public static func pmset(scope: String, value: Int) -> Result<Void, CommandError> {
-        guard let reply = transact("SET \(scope) \(value)") else { return .failure(.notInstalled) }
-        if reply == "OK" { return .success(()) }
-        return .failure(.refused(reply))
+        // 30 s: post-boot pmset was measured at 9–11 s (helper log, 2026-11-16/23/27).
+        switch transact("SET \(scope) \(value)", replyTimeout: 30) {
+        case .success("OK"): return .success(())
+        case .success(let reply): return .failure(.refused(reply))
+        case .failure(let e): return .failure(e)
+        }
     }
 
     // MARK: Install / uninstall (root steps run via one osascript admin prompt)
