@@ -169,3 +169,9 @@ Research for the first-use heat warning: what can actually go wrong when a MacBo
   - **Closing the lid with something on the keyboard** (pen, cable, thick camera cover) can damage the display — a closed-lid-specific closing risk.
   - **Skin contact**: prolonged lap contact with a warm device (Apple's safety page).
 - Verdict: the warning must NOT say "this could break your Mac" (the Mac protects itself by slowing down). It says: suppression keeps the Mac awake with the lid closed — the Mac protects itself by slowing down; what you control is airflow and where it sits — **never in a bag or enclosed space (the one real hazard, Apple's own fire/injury warning class)**; hard surface, not bedding or lap for long; sustained heavy loads run hotter and wear the battery faster.
+
+## 17. Password prompt at boot despite an installed helper (2026-11-27)
+
+Operator report: "every now and then at boot" the *Allow administrator access for a script started by NeverSleep* dialog reappears. Logs show it on 2026-11-16 22:46, 2026-11-23 09:53 and 2026-11-27 09:22, always right after boot. Each time the helper had started fine (`started: … version=2`) and the launch handshake succeeded. But the first `SET` from preference enforcement took **9–11 s** in the daemon (`took=10889ms`, `11697ms`, `8967ms`; normally ~350 ms: powerd is busy right after boot). The client's single 3 s socket timeout returned nil, nil meant `.notInstalled`, and that triggered the mid-session "reinstall", i.e. the password prompt. The write had in fact succeeded (`verified=true`).
+
+**Verdict:** a client bug, not a helper or launchd problem. Fixed in 0.15.1: `PING` keeps 3 s, `SET` waits 30 s, and a connected-but-silent daemon is a new `.timedOut` error that never reinstalls. Only an empty socket (connect fails) still counts as "not installed".

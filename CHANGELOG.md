@@ -2,6 +2,15 @@
 
 All notable changes. Format: Keep a Changelog-ish, versioned per the release sequence in `USER.md`.
 
+## [0.15.1] — 2026-11-27: no more admin prompt at boot (slow helper ≠ missing helper)
+
+Version bump: patch (bug fix). Bundle version (`Scripts/make-app.sh`) 0.15.0 → 0.15.1 (build 1500 → 1501).
+
+**Fixed (operator report: "every now and then at boot I keep having to authorize this")**
+- `Sources/NeverSleepCore/PrivilegedHelper.swift` — before: `transact` used one 3 s timeout for every socket op and returned nil on any failure, and nil was mapped to `.notInstalled`. Right after boot the daemon's first `pmset` takes 9–11 s (helper log: `took=10889ms` 2026-11-27, `11697ms` 11-16, `8967ms` 11-23), so the app decided the helper was gone. Now `transact` returns `Result<String, CommandError>`: connect or send failure → `.notInstalled`; connected but no reply in time → new `.timedOut`. `PING` keeps a 3 s reply timeout, `SET` waits 30 s (send timeout stays 3 s).
+- `Sources/NeverSleepCore/SleepController.swift` — `pmset` handles `.timedOut` without reinstalling (logs it and returns `.refused("helper timed out")`; the 1 s poll reflects the live state, and the write usually lands anyway). The mid-session reinstall now runs only when nothing is listening on the socket. Before: every post-boot slow write ran the reinstall, which is the "Allow administrator access for a script started by NeverSleep" dialog, even though the write had already succeeded (`verified=true`).
+- Side effect: the menu-bar icon can stay unresponsive for those ~10 s right after boot (the call is synchronous on the main thread).
+
 ## [0.15.0] — 2026-11-17: About page redesigned to the card style (heat-warning design language)
 
 Version bump: minor (UI redesign). Bundle version (`Scripts/make-app.sh`) 0.14.0 → 0.15.0 (build 1400 → 1500).

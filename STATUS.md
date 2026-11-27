@@ -55,6 +55,8 @@ Founded: 2026-11-09 (operator named the project "NeverSleep", successor to NoSle
 
 **v0.15.0 released** (2026-11-17): the About page redesigned to the **heat-warning panel's card style** (operator request "completely redesign the About page so it adheres to this design style"): icon header (Zz 52 pt + name + version), three soft-background cards — ♥ **Support NeverSleep** (QR 88 pt, tier buttons, generic link, caption), 🐞 **Report a Bug** (Issues link), 📄 **License & code** (©, MIT/GPL split, repo link) — and the tagline as the footer. Content unchanged, presentation moved to the shared design language (`card()` helper mirrors HeatWarningPanel's card pattern). Full sequence, released, installed. E2E live: About window 300×650 captured with all three cards rendering (the verification itself needed two tries — menu rows shifted (⚙️ emoji) and a Sparkle "up to date" alert sat over the window; lessons in the skill). README's About image updated.
 
+**0.15.1 in flight** (2026-11-27): fix for the recurring admin prompt at boot. The post-boot `pmset` took 9–11 s, the client's 3 s timeout read that as "helper missing", and it reinstalled the helper, which is the prompt (findings §17). `SET` now waits 30 s and timeouts never reinstall. Compiles (`swift build -c release`). **Not yet verified on a reboot, not yet released.**
+
 ## Not started (ordered)
 
 1. SwiftUI `MenuBarExtra` skeleton: one toggle, filled/outline icon states, quit item.
